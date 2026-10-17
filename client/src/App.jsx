@@ -327,7 +327,7 @@ function Title({ k, title, desc, action }) {
 function useData() {
   const [products, P] = useState([]),
     [quotes, Q] = useState([]),
-    [site, S] = useState({}),
+    [site, setSite] = useState({}),
     [error, E] = useState(""),
     [loading, L] = useState(true);
   async function refresh() {
@@ -340,7 +340,7 @@ function useData() {
       ]);
       P(a);
       Q(b);
-      S(c);
+      setSite(c);
       E("");
     } catch (e) {
       E(e.message);
