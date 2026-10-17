@@ -6,7 +6,18 @@ const schema = new mongoose.Schema(
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, default: "" },
     product: { type: String, default: "" },
-    message: { type: String, required: true },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+    quantity: { type: Number, min: 1, default: 1 },
+    selections: {
+      type: [
+        new mongoose.Schema(
+          { name: { type: String, default: "" }, value: { type: String, default: "" } },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
+    message: { type: String, default: "" },
     status: {
       type: String,
       enum: ["new", "contacted", "closed"],

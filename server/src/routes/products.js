@@ -20,6 +20,15 @@ r.get("/", async (req, res, next) => {
     next(e);
   }
 });
+r.get("/slug/:slug", async (req, res, next) => {
+  try {
+    const p = await Product.findOne({ slug: req.params.slug, active: true });
+    if (!p) return res.status(404).json({ message: "Product not found." });
+    res.json(p);
+  } catch (e) {
+    next(e);
+  }
+});
 r.post("/", requireAdmin, async (req, res, next) => {
   try {
     if (!req.body.name?.en?.trim())

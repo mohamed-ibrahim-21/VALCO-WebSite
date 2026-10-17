@@ -20,36 +20,11 @@ import {
 } from "lucide-react";
 import { api, imageUrl } from "./api";
 import { useLang, pick, siteText, LangToggle } from "./i18n.jsx";
+import { Header, SiteFooter } from "./Layout.jsx";
+import ProductPage from "./ProductPage.jsx";
+import ProductExtrasEditor, { toEditable, fromEditable } from "./ProductExtrasEditor.jsx";
 
 const locale = (lang) => (lang === "ar" ? "ar-EG" : "en-GB");
-
-function companyName(site, lang) {
-  return siteText(site, "companyName", lang, site.companyName || "VALCO");
-}
-
-function Header({ site }) {
-  const { t, lang } = useLang();
-  return (
-    <header className="header">
-      <Link className="brand" to="/">
-        <b>Ⓥ {companyName(site, lang)}</b>
-        <small>{siteText(site, "tagline", lang, t("tagline"))}</small>
-      </Link>
-      <nav>
-        <a href="#home">{t("navHome")}</a>
-        <a href="#products">{t("navProducts")}</a>
-        <a href="#about">{t("navAbout")}</a>
-        <a href="#contact">{t("navContact")}</a>
-      </nav>
-      <div className="header-actions">
-        <LangToggle />
-        <a className="btn primary" href="#contact">
-          {t("requestQuote")} {t("arrow")}
-        </a>
-      </div>
-    </header>
-  );
-}
 
 const emptyQuote = {
   name: "",
@@ -74,6 +49,12 @@ function Home() {
       })
       .catch((e) => M(e.message));
   }, []);
+  // Coming back from a product page with /#products: scroll once content has rendered.
+  useEffect(() => {
+    if (!location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView();
+  }, [products.length, site]);
   function upd(e) {
     F({ ...form, [e.target.name]: e.target.value });
   }
@@ -119,7 +100,7 @@ function Home() {
         <p>{t("catalogDesc")}</p>
         <div className="grid">
           {products.map((p) => (
-            <article className="card" key={p._id}>
+            <Link className="card" to={`/products/${p.slug}`} key={p._id}>
               <div className="product-img">
                 {p.image ? (
                   <img src={imageUrl(p.image)} alt={pick(p.name, lang)} />
@@ -133,16 +114,11 @@ function Home() {
                 </small>
                 <h3>{pick(p.name, lang)}</h3>
                 <p>{pick(p.description, lang)}</p>
-                <a
-                  href="#contact"
-                  onClick={() =>
-                    F((f) => ({ ...f, product: pick(p.name, lang) }))
-                  }
-                >
+                <span className="card-link">
                   {t("viewDetails")} {t("arrow")}
-                </a>
+                </span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
         {!products.length && <p>{t("noProducts")}</p>}
@@ -196,10 +172,7 @@ function Home() {
           {msg && <p>{msg}</p>}
         </form>
       </section>
-      <footer>
-        © {new Date().getFullYear()} {companyName(site, lang)}. {t("rights")}{" "}
-        <Link to="/admin/login">{t("admin")}</Link>
-      </footer>
+      <SiteFooter site={site} />
     </>
   );
 }
@@ -440,6 +413,9 @@ const blank = () => ({
   featured: false,
   active: true,
   options: {},
+  gallery: [],
+  specs: [],
+  optionGroups: [],
 });
 
 function Products({ d }) {
@@ -451,7 +427,7 @@ function Products({ d }) {
     e.preventDefault();
     try {
       const body = {
-        ...edit,
+        ...fromEditable(edit),
         slug:
           edit.slug ||
           edit.name.en
@@ -471,15 +447,20 @@ function Products({ d }) {
       N(e.message);
     }
   }
-  async function upload(file) {
+  async function uploadFile(file) {
     const f = new FormData();
     f.append("image", file);
     try {
       const r = await api("/api/upload", { method: "POST", body: f });
-      E((x) => ({ ...x, image: r.url }));
+      return r.url;
     } catch (e) {
       N(e.message);
+      return "";
     }
+  }
+  async function upload(file) {
+    const url = await uploadFile(file);
+    if (url) E((x) => ({ ...x, image: url }));
   }
   async function del(id) {
     if (!confirm(t("confirmDelete"))) return;
@@ -505,7 +486,7 @@ function Products({ d }) {
         title={t("products")}
         desc={t("productsDesc")}
         action={
-          <button className="btn primary" onClick={() => E(blank())}>
+          <button className="btn primary" onClick={() => E(toEditable(blank()))}>
             <Plus size={16} />
             {t("addProduct")}
           </button>
@@ -534,12 +515,14 @@ function Products({ d }) {
             <button
               className="icon-btn"
               onClick={() =>
-                E({
-                  ...p,
-                  categoryAr: p.categoryAr || "",
-                  name: { en: "", ar: "", ...p.name },
-                  description: { en: "", ar: "", ...p.description },
-                })
+                E(
+                  toEditable({
+                    ...p,
+                    categoryAr: p.categoryAr || "",
+                    name: { en: "", ar: "", ...p.name },
+                    description: { en: "", ar: "", ...p.description },
+                  }),
+                )
               }
             >
               <Pencil size={16} />
@@ -631,7 +614,7 @@ function Products({ d }) {
                   onChange={(e) => E({ ...edit, image: e.target.value })}
                 />
                 <span className="upload-label">
-                  <Upload size={15} /> {t("uploadImage")}{" "}
+                  <Upload size={15} /> {t("uploadMainImage")}{" "}
                   <input
                     type="file"
                     accept="image/*"
@@ -658,6 +641,7 @@ function Products({ d }) {
                 {t("published")}
               </label>
             </div>
+            <ProductExtrasEditor edit={edit} setEdit={E} uploadFile={uploadFile} />
             <div className="actions">
               <button
                 type="button"
@@ -808,8 +792,20 @@ function Quotes({ d }) {
                       {q.company} <span dir="ltr">{q.phone}</span>
                     </small>
                   </td>
-                  <td>{q.product || t("generalEnquiry")}</td>
-                  <td>{q.message}</td>
+                  <td>
+                    {q.product || t("generalEnquiry")}
+                    {q.productId && (
+                      <small>
+                        {t("quantity")}: {q.quantity || 1}
+                      </small>
+                    )}
+                    {q.selections?.map((sel, i) => (
+                      <small key={i}>
+                        {sel.name}: <b>{sel.value}</b>
+                      </small>
+                    ))}
+                  </td>
+                  <td>{q.message || "—"}</td>
                   <td>
                     {new Date(q.createdAt).toLocaleDateString(locale(lang))}
                   </td>
@@ -886,6 +882,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/products/:slug" element={<ProductPage />} />
       <Route path="/admin/login" element={<Login />} />
       <Route path="/admin/*" element={<Admin />} />
       <Route path="*" element={<Navigate to="/" replace />} />
