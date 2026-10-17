@@ -17,7 +17,12 @@ if (!process.env.MONGODB_URI)
   throw Error("MONGODB_URI missing from server/.env");
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
   throw Error("JWT_SECRET must be at least 32 characters");
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
+// CLIENT_ORIGIN can hold several comma-separated URLs (e.g. the Vercel site and localhost).
+const origins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((o) => o.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+app.use(cors({ origin: origins }));
 app.use(express.json({ limit: "1mb" }));
 app.use("/uploads", express.static(path.resolve(dir, "../uploads")));
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
