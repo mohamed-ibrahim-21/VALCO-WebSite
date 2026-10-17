@@ -18,6 +18,18 @@ const schema = new mongoose.Schema(
       default:
         "We support industrial customers with dependable valve solutions.",
     },
+    companyNameAr: { type: String, default: "" },
+    taglineAr: { type: String, default: "صيانة واختبار المحابس" },
+    heroTitleAr: { type: String, default: "حلول محابس موثوقة للصناعة" },
+    heroSubtitleAr: {
+      type: String,
+      default: "دقة وأمان وحلول تحكم في التدفق يمكن الاعتماد عليها.",
+    },
+    aboutTextAr: {
+      type: String,
+      default:
+        "ندعم عملاءنا في القطاع الصناعي بحلول محابس يمكن الاعتماد عليها.",
+    },
     contactEmail: { type: String, default: "" },
     contactPhone: { type: String, default: "" },
   },

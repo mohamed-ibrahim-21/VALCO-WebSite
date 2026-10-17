@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import {
-  ArrowRight,
   Boxes,
   LayoutDashboard,
   Package,
@@ -17,38 +16,55 @@ import {
   X,
   ExternalLink,
   Menu,
+  Languages,
 } from "lucide-react";
 import { api, imageUrl } from "./api";
+import { useLang, pick, siteText, LangToggle } from "./i18n.jsx";
+
+const locale = (lang) => (lang === "ar" ? "ar-EG" : "en-GB");
+
+function companyName(site, lang) {
+  return siteText(site, "companyName", lang, site.companyName || "VALCO");
+}
+
 function Header({ site }) {
+  const { t, lang } = useLang();
   return (
     <header className="header">
       <Link className="brand" to="/">
-        <b>Ⓥ {site.companyName || "VALCO"}</b>
-        <small>{site.tagline || "VALVE MAINTENANCE & TESTING"}</small>
+        <b>Ⓥ {companyName(site, lang)}</b>
+        <small>{siteText(site, "tagline", lang, t("tagline"))}</small>
       </Link>
       <nav>
-        <a href="#home">Home</a>
-        <a href="#products">Products</a>
-        <a href="#about">About Us</a>
-        <a href="#contact">Contact</a>
+        <a href="#home">{t("navHome")}</a>
+        <a href="#products">{t("navProducts")}</a>
+        <a href="#about">{t("navAbout")}</a>
+        <a href="#contact">{t("navContact")}</a>
       </nav>
-      <a className="btn primary" href="#contact">
-        Request a Quote →
-      </a>
+      <div className="header-actions">
+        <LangToggle />
+        <a className="btn primary" href="#contact">
+          {t("requestQuote")} {t("arrow")}
+        </a>
+      </div>
     </header>
   );
 }
+
+const emptyQuote = {
+  name: "",
+  company: "",
+  email: "",
+  phone: "",
+  product: "",
+  message: "",
+};
+
 function Home() {
+  const { t, lang } = useLang();
   const [site, S] = useState({}),
     [products, P] = useState([]),
-    [form, F] = useState({
-      name: "",
-      company: "",
-      email: "",
-      phone: "",
-      product: "",
-      message: "",
-    }),
+    [form, F] = useState(emptyQuote),
     [msg, M] = useState("");
   useEffect(() => {
     Promise.all([api("/api/site"), api("/api/products")])
@@ -64,22 +80,12 @@ function Home() {
   async function send(e) {
     e.preventDefault();
     try {
-      M(
-        (
-          await api("/api/quotes", {
-            method: "POST",
-            body: JSON.stringify(form),
-          })
-        ).message,
-      );
-      F({
-        name: "",
-        company: "",
-        email: "",
-        phone: "",
-        product: "",
-        message: "",
+      await api("/api/quotes", {
+        method: "POST",
+        body: JSON.stringify(form),
       });
+      M(t("quoteSent"));
+      F(emptyQuote);
     } catch (e) {
       M(e.message);
     }
@@ -89,100 +95,93 @@ function Home() {
       <Header site={site} />
       <section id="home" className="hero">
         <div>
-          <span className="pill">BUILT FOR RELIABLE FLOW CONTROL</span>
-          <h1>{site.heroTitle || "Reliable valve solutions for industry"}</h1>
-          <p>
-            {site.heroSubtitle ||
-              "Precision, safety and dependable flow control solutions."}
-          </p>
+          <span className="pill">{t("heroPill")}</span>
+          <h1>{siteText(site, "heroTitle", lang, t("heroTitle"))}</h1>
+          <p>{siteText(site, "heroSubtitle", lang, t("heroSubtitle"))}</p>
           <a className="btn white" href="#products">
-            Explore Products →
+            {t("exploreProducts")} {t("arrow")}
           </a>{" "}
           <a className="btn ghost" href="#contact">
-            Request a Quote
+            {t("requestQuote")}
           </a>
         </div>
         <div className="hero-img">
           {site.heroImage ? (
-            <img src={imageUrl(site.heroImage)} alt="Industrial valves" />
+            <img src={imageUrl(site.heroImage)} alt={t("heroImageAlt")} />
           ) : (
-            <h2>Industrial Valve Solutions</h2>
+            <h2>{t("heroFallback")}</h2>
           )}
         </div>
       </section>
       <section id="products" className="section">
-        <span className="eyebrow">OUR CATALOG</span>
-        <h2>Our Products</h2>
-        <p>
-          Browse the catalog and request specifications for your application.
-        </p>
+        <span className="eyebrow">{t("catalogEyebrow")}</span>
+        <h2>{t("ourProducts")}</h2>
+        <p>{t("catalogDesc")}</p>
         <div className="grid">
           {products.map((p) => (
             <article className="card" key={p._id}>
               <div className="product-img">
                 {p.image ? (
-                  <img src={imageUrl(p.image)} alt={p.name?.en} />
+                  <img src={imageUrl(p.image)} alt={pick(p.name, lang)} />
                 ) : (
                   <Boxes size={44} />
                 )}
               </div>
               <div className="card-body">
-                <small>{p.category}</small>
-                <h3>{p.name?.en}</h3>
-                <p>{p.description?.en}</p>
+                <small>
+                  {pick({ en: p.category, ar: p.categoryAr }, lang)}
+                </small>
+                <h3>{pick(p.name, lang)}</h3>
+                <p>{pick(p.description, lang)}</p>
                 <a
                   href="#contact"
                   onClick={() =>
-                    F((f) => ({ ...f, product: p.name?.en || "" }))
+                    F((f) => ({ ...f, product: pick(p.name, lang) }))
                   }
                 >
-                  View details →
+                  {t("viewDetails")} {t("arrow")}
                 </a>
               </div>
             </article>
           ))}
         </div>
-        {!products.length && (
-          <p>No products yet. Add products from the admin dashboard.</p>
-        )}
+        {!products.length && <p>{t("noProducts")}</p>}
       </section>
       <section id="about" className="about">
-        <span className="eyebrow">ABOUT VALCO</span>
-        <h2>Engineering confidence into every connection.</h2>
-        <p>
-          {site.aboutText ||
-            "We support industrial customers with dependable valve solutions."}
-        </p>
+        <span className="eyebrow">{t("aboutEyebrow")}</span>
+        <h2>{t("aboutTitle")}</h2>
+        <p>{siteText(site, "aboutText", lang, t("aboutText"))}</p>
       </section>
       <section id="contact" className="section contact">
         <div>
-          <span className="eyebrow">LET'S TALK</span>
-          <h2>Request a Quote</h2>
-          <p>Tell us about your application and our team will follow up.</p>
-          {site.contactEmail && <p>{site.contactEmail}</p>}
-          {site.contactPhone && <p>{site.contactPhone}</p>}
+          <span className="eyebrow">{t("talkEyebrow")}</span>
+          <h2>{t("requestQuote")}</h2>
+          <p>{t("contactDesc")}</p>
+          {site.contactEmail && <p dir="ltr">{site.contactEmail}</p>}
+          {site.contactPhone && <p dir="ltr">{site.contactPhone}</p>}
         </div>
         <form onSubmit={send} className="form-grid">
           {[
-            ["name", "Name *"],
-            ["company", "Company"],
-            ["email", "Email *"],
-            ["phone", "Phone"],
-            ["product", "Product of interest"],
+            ["name", "fName"],
+            ["company", "fCompany"],
+            ["email", "fEmail"],
+            ["phone", "fPhone"],
+            ["product", "fProduct"],
           ].map(([n, l]) => (
             <label key={n}>
-              {l}
+              {t(l)}
               <input
                 name={n}
                 value={form[n]}
                 onChange={upd}
                 required={n === "name" || n === "email"}
-                type={n === "email" ? "email" : "text"}
+                type={n === "email" ? "email" : n === "phone" ? "tel" : "text"}
+                dir={n === "email" || n === "phone" ? "ltr" : undefined}
               />
             </label>
           ))}
           <label className="full">
-            Message *
+            {t("fMessage")}
             <textarea
               name="message"
               value={form.message}
@@ -191,18 +190,22 @@ function Home() {
               rows="4"
             />
           </label>
-          <button className="btn primary">Send Request →</button>
+          <button className="btn primary">
+            {t("sendRequest")} {t("arrow")}
+          </button>
           {msg && <p>{msg}</p>}
         </form>
       </section>
       <footer>
-        © {new Date().getFullYear()} {site.companyName || "VALCO"}. All rights
-        reserved. <Link to="/admin/login">Admin</Link>
+        © {new Date().getFullYear()} {companyName(site, lang)}. {t("rights")}{" "}
+        <Link to="/admin/login">{t("admin")}</Link>
       </footer>
     </>
   );
 }
+
 function Login() {
+  const { t } = useLang();
   const [email, E] = useState("admin@valco.local"),
     [password, P] = useState(""),
     [error, Er] = useState(""),
@@ -228,16 +231,22 @@ function Login() {
   return (
     <div className="login-wrap">
       <form className="login" onSubmit={submit}>
-        <Link to="/">← Website</Link>
+        <div className="login-top">
+          <Link to="/">
+            {t("arrow") === "→" ? "←" : "→"} {t("backToSite")}
+          </Link>
+          <LangToggle />
+        </div>
         <div className="shield">
           <ShieldCheck />
         </div>
-        <h1>Admin sign in</h1>
-        <p>Manage your VALCO website and catalog.</p>
+        <h1>{t("signInTitle")}</h1>
+        <p>{t("signInDesc")}</p>
         <label>
-          Email
+          {t("email")}
           <input
             type="email"
+            dir="ltr"
             value={email}
             onChange={(e) => E(e.target.value)}
             required
@@ -245,9 +254,10 @@ function Login() {
           />
         </label>
         <label>
-          Password
+          {t("password")}
           <input
             type="password"
+            dir="ltr"
             value={password}
             onChange={(e) => P(e.target.value)}
             required
@@ -256,28 +266,30 @@ function Login() {
         </label>
         {error && <p className="error">{error}</p>}
         <button className="btn primary full" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy ? t("signingIn") : t("signIn")}
         </button>
       </form>
     </div>
   );
 }
+
 function AdminShell({ children, active, logout }) {
+  const { t, toggle } = useLang();
   const [open, O] = useState(false),
     items = [
-      ["/admin", "Overview", LayoutDashboard],
-      ["/admin/products", "Products", Package],
-      ["/admin/content", "Website content", Settings],
-      ["/admin/quotes", "Quote requests", ClipboardList],
+      ["/admin", "overview", LayoutDashboard],
+      ["/admin/products", "products", Package],
+      ["/admin/content", "websiteContent", Settings],
+      ["/admin/quotes", "quoteRequests", ClipboardList],
     ];
   return (
     <div className="admin">
       <aside className={open ? "sidebar open" : "sidebar"}>
         <Link className="brand" to="/">
           <b>Ⓥ VALCO</b>
-          <small>ADMIN PANEL</small>
+          <small>{t("adminPanel")}</small>
         </Link>
-        <p className="eyebrow">WORKSPACE</p>
+        <p className="eyebrow">{t("workspace")}</p>
         {items.map(([to, label, Icon]) => (
           <Link
             key={to}
@@ -286,17 +298,21 @@ function AdminShell({ children, active, logout }) {
             onClick={() => O(false)}
           >
             <Icon size={17} />
-            {label}
+            {t(label)}
           </Link>
         ))}
         <div className="side-bottom">
-          <a className="nav" href="/" target="_blank">
+          <button className="nav" onClick={toggle}>
+            <Languages size={17} />
+            {t("switchLang")}
+          </button>
+          <a className="nav" href="/" target="_blank" rel="noreferrer">
             <ExternalLink size={17} />
-            View website
+            {t("viewWebsite")}
           </a>
           <button className="nav" onClick={logout}>
             <LogOut size={17} />
-            Sign out
+            {t("signOut")}
           </button>
         </div>
       </aside>
@@ -305,13 +321,14 @@ function AdminShell({ children, active, logout }) {
           <button className="mobile" onClick={() => O(!open)}>
             <Menu />
           </button>
-          Website management <span>Admin</span>
+          {t("websiteManagement")} <span>{t("admin")}</span>
         </header>
         <div className="admin-content">{children}</div>
       </main>
     </div>
   );
 }
+
 function Title({ k, title, desc, action }) {
   return (
     <div className="title">
@@ -324,6 +341,7 @@ function Title({ k, title, desc, action }) {
     </div>
   );
 }
+
 function useData() {
   const [products, P] = useState([]),
     [quotes, Q] = useState([]),
@@ -353,73 +371,79 @@ function useData() {
   }, []);
   return { products, quotes, site, setSite, error, loading, refresh };
 }
+
 function Overview({ d }) {
+  const { t, lang } = useLang();
   return (
     <>
-      <Title
-        k="OVERVIEW"
-        title="Welcome back"
-        desc="Manage your website and customer enquiries."
-      />
+      <Title k={t("overviewK")} title={t("welcome")} desc={t("welcomeDesc")} />
       <div className="stats">
         <div>
           <Package />
-          <small>Total products</small>
+          <small>{t("totalProducts")}</small>
           <strong>{d.products.length}</strong>
         </div>
         <div>
           <Boxes />
-          <small>Featured products</small>
+          <small>{t("featuredProducts")}</small>
           <strong>{d.products.filter((p) => p.featured).length}</strong>
         </div>
         <div>
           <ClipboardList />
-          <small>Quote requests</small>
+          <small>{t("quoteRequests")}</small>
           <strong>{d.quotes.length}</strong>
         </div>
       </div>
       <div className="panel">
-        <h2>Recent quote requests</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Product</th>
-              <th>Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {d.quotes.slice(0, 8).map((q) => (
-              <tr key={q._id}>
-                <td>
-                  {q.name}
-                  <small>{q.email}</small>
-                </td>
-                <td>{q.product || "—"}</td>
-                <td>{new Date(q.createdAt).toLocaleDateString()}</td>
-                <td>{q.status}</td>
+        <h2>{t("recentQuotes")}</h2>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("customer")}</th>
+                <th>{t("product")}</th>
+                <th>{t("date")}</th>
+                <th>{t("status")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {!d.quotes.length && <p>No quote requests yet.</p>}
+            </thead>
+            <tbody>
+              {d.quotes.slice(0, 8).map((q) => (
+                <tr key={q._id}>
+                  <td>
+                    {q.name}
+                    <small dir="ltr">{q.email}</small>
+                  </td>
+                  <td>{q.product || "—"}</td>
+                  <td>
+                    {new Date(q.createdAt).toLocaleDateString(locale(lang))}
+                  </td>
+                  <td>{t(`st_${q.status}`)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {!d.quotes.length && <p>{t("noQuotes")}</p>}
       </div>
     </>
   );
 }
+
 const blank = () => ({
   slug: "",
   sku: "",
   name: { en: "", ar: "" },
   description: { en: "", ar: "" },
   category: "Gate Valves",
+  categoryAr: "محابس بوابة",
   image: "",
   featured: false,
   active: true,
   options: {},
 });
+
 function Products({ d }) {
+  const { t, lang } = useLang();
   const [edit, E] = useState(null),
     [notice, N] = useState(""),
     [query, Q] = useState("");
@@ -441,7 +465,7 @@ function Products({ d }) {
         body: JSON.stringify(body),
       });
       E(null);
-      N("Product saved.");
+      N(t("productSaved"));
       await d.refresh();
     } catch (e) {
       N(e.message);
@@ -458,7 +482,7 @@ function Products({ d }) {
     }
   }
   async function del(id) {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm(t("confirmDelete"))) return;
     try {
       await api(`/api/products/${id}`, { method: "DELETE" });
       await d.refresh();
@@ -466,21 +490,24 @@ function Products({ d }) {
       N(e.message);
     }
   }
+  const setName = (k, v) => E({ ...edit, name: { ...edit.name, [k]: v } });
+  const setDesc = (k, v) =>
+    E({ ...edit, description: { ...edit.description, [k]: v } });
   const filtered = d.products.filter((p) =>
-    `${p.name?.en} ${p.category} ${p.sku}`
+    `${p.name?.en} ${p.name?.ar} ${p.category} ${p.categoryAr} ${p.sku}`
       .toLowerCase()
       .includes(query.toLowerCase()),
   );
   return (
     <>
       <Title
-        k="CATALOG MANAGEMENT"
-        title="Products"
-        desc="Create, edit, publish and remove products."
+        k={t("catalogK")}
+        title={t("products")}
+        desc={t("productsDesc")}
         action={
           <button className="btn primary" onClick={() => E(blank())}>
             <Plus size={16} />
-            Add product
+            {t("addProduct")}
           </button>
         }
       />
@@ -488,7 +515,7 @@ function Products({ d }) {
       <div className="panel">
         <input
           className="search"
-          placeholder="Search products…"
+          placeholder={t("searchProducts")}
           value={query}
           onChange={(e) => Q(e.target.value)}
         />
@@ -498,10 +525,10 @@ function Products({ d }) {
               {p.image ? <img src={imageUrl(p.image)} alt="" /> : <Boxes />}
             </div>
             <div className="grow">
-              <b>{p.name?.en}</b>
+              <b>{pick(p.name, lang)}</b>
               <small>
-                {p.category} · {p.sku || "No SKU"} ·{" "}
-                {p.active ? "Published" : "Draft"}
+                {pick({ en: p.category, ar: p.categoryAr }, lang)} ·{" "}
+                {p.sku || t("noSku")} · {p.active ? t("published") : t("draft")}
               </small>
             </div>
             <button
@@ -509,6 +536,7 @@ function Products({ d }) {
               onClick={() =>
                 E({
                   ...p,
+                  categoryAr: p.categoryAr || "",
                   name: { en: "", ar: "", ...p.name },
                   description: { en: "", ar: "", ...p.description },
                 })
@@ -526,7 +554,7 @@ function Products({ d }) {
         <div className="modal-bg">
           <form className="modal" onSubmit={save}>
             <div className="modal-title">
-              <h2>{edit._id ? "Edit product" : "Add product"}</h2>
+              <h2>{edit._id ? t("editProduct") : t("addProduct")}</h2>
               <button
                 type="button"
                 className="icon-btn"
@@ -536,58 +564,74 @@ function Products({ d }) {
               </button>
             </div>
             <div className="form-grid">
-              {[
-                ["en", "Product name (English)"],
-                ["ar", "Product name (Arabic)"],
-              ].map(([k, l]) => (
-                <label key={k}>
-                  {l}
-                  <input
-                    value={edit.name[k] || ""}
-                    required={k === "en"}
-                    onChange={(e) =>
-                      E({
-                        ...edit,
-                        name: { ...edit.name, [k]: e.target.value },
-                      })
-                    }
-                  />
-                </label>
-              ))}
               <label>
-                SKU
+                {t("nameEn")}
                 <input
+                  dir="ltr"
+                  value={edit.name.en || ""}
+                  required
+                  onChange={(e) => setName("en", e.target.value)}
+                />
+              </label>
+              <label>
+                {t("nameAr")}
+                <input
+                  dir="rtl"
+                  value={edit.name.ar || ""}
+                  onChange={(e) => setName("ar", e.target.value)}
+                />
+              </label>
+              <label>
+                {t("categoryEn")}
+                <input
+                  dir="ltr"
+                  value={edit.category || ""}
+                  onChange={(e) => E({ ...edit, category: e.target.value })}
+                />
+              </label>
+              <label>
+                {t("categoryAr")}
+                <input
+                  dir="rtl"
+                  value={edit.categoryAr || ""}
+                  onChange={(e) => E({ ...edit, categoryAr: e.target.value })}
+                />
+              </label>
+              <label className="full">
+                {t("descEn")}
+                <textarea
+                  dir="ltr"
+                  rows="3"
+                  value={edit.description.en || ""}
+                  onChange={(e) => setDesc("en", e.target.value)}
+                />
+              </label>
+              <label className="full">
+                {t("descAr")}
+                <textarea
+                  dir="rtl"
+                  rows="3"
+                  value={edit.description.ar || ""}
+                  onChange={(e) => setDesc("ar", e.target.value)}
+                />
+              </label>
+              <label>
+                {t("sku")}
+                <input
+                  dir="ltr"
                   value={edit.sku || ""}
                   onChange={(e) => E({ ...edit, sku: e.target.value })}
                 />
               </label>
               <label>
-                Category
+                {t("imageUrl")}
                 <input
-                  value={edit.category || ""}
-                  onChange={(e) => E({ ...edit, category: e.target.value })}
-                />
-              </label>
-              <label className="full">
-                Description
-                <input
-                  value={edit.description.en || ""}
-                  onChange={(e) =>
-                    E({
-                      ...edit,
-                      description: { ...edit.description, en: e.target.value },
-                    })
-                  }
-                />
-              </label>
-              <label className="full">
-                Image URL
-                <input
+                  dir="ltr"
                   value={edit.image || ""}
                   onChange={(e) => E({ ...edit, image: e.target.value })}
                 />
                 <span className="upload-label">
-                  <Upload size={15} /> Upload image{" "}
+                  <Upload size={15} /> {t("uploadImage")}{" "}
                   <input
                     type="file"
                     accept="image/*"
@@ -603,7 +647,7 @@ function Products({ d }) {
                   checked={!!edit.featured}
                   onChange={(e) => E({ ...edit, featured: e.target.checked })}
                 />{" "}
-                Featured
+                {t("featured")}
               </label>
               <label className="check">
                 <input
@@ -611,7 +655,7 @@ function Products({ d }) {
                   checked={!!edit.active}
                   onChange={(e) => E({ ...edit, active: e.target.checked })}
                 />{" "}
-                Published
+                {t("published")}
               </label>
             </div>
             <div className="actions">
@@ -620,11 +664,11 @@ function Products({ d }) {
                 className="btn muted"
                 onClick={() => E(null)}
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button className="btn primary">
                 <Save size={16} />
-                Save product
+                {t("saveProduct")}
               </button>
             </div>
           </form>
@@ -633,7 +677,9 @@ function Products({ d }) {
     </>
   );
 }
+
 function Content({ d }) {
+  const { t } = useLang();
   const [f, F] = useState(d.site),
     [msg, M] = useState("");
   useEffect(() => F(d.site), [d.site]);
@@ -645,51 +691,71 @@ function Content({ d }) {
         body: JSON.stringify(f),
       });
       d.setSite(s);
-      M("Website content saved.");
+      M(t("contentSaved"));
     } catch (e) {
       M(e.message);
     }
   }
-  const fields = [
-    ["companyName", "Company name"],
-    ["tagline", "Tagline"],
-    ["heroTitle", "Hero title"],
-    ["heroSubtitle", "Hero subtitle"],
-    ["heroImage", "Hero image URL"],
-    ["contactEmail", "Contact email"],
-    ["contactPhone", "Contact phone"],
+  const translated = [
+    ["companyName", "companyName"],
+    ["tagline", "taglineL"],
+    ["heroTitle", "heroTitleL"],
+    ["heroSubtitle", "heroSubtitleL"],
   ];
+  const field = (k, label, dir) => (
+    <label key={k}>
+      {t(label)}
+      <input
+        dir={dir}
+        value={f[k] || ""}
+        onChange={(e) => F({ ...f, [k]: e.target.value })}
+      />
+    </label>
+  );
   return (
     <>
       <Title
-        k="WEBSITE SETTINGS"
-        title="Website content"
-        desc="Edit the public homepage copy and contact details."
+        k={t("settingsK")}
+        title={t("websiteContent")}
+        desc={t("contentDesc")}
       />
       <form className="panel content-panel" onSubmit={save}>
+        <h2>{t("englishVersion")}</h2>
         <div className="form-grid">
-          {fields.map(([k, l]) => (
-            <label key={k}>
-              {l}
-              <input
-                value={f[k] || ""}
-                onChange={(e) => F({ ...f, [k]: e.target.value })}
-              />
-            </label>
-          ))}
+          {translated.map(([k, l]) => field(k, l, "ltr"))}
           <label className="full">
-            About text
+            {t("aboutTextL")}
             <textarea
-              rows="5"
+              dir="ltr"
+              rows="4"
               value={f.aboutText || ""}
               onChange={(e) => F({ ...f, aboutText: e.target.value })}
             />
           </label>
         </div>
+        <h2 className="section-gap">{t("arabicVersion")}</h2>
+        <div className="form-grid">
+          {translated.map(([k, l]) => field(`${k}Ar`, l, "rtl"))}
+          <label className="full">
+            {t("aboutTextL")}
+            <textarea
+              dir="rtl"
+              rows="4"
+              value={f.aboutTextAr || ""}
+              onChange={(e) => F({ ...f, aboutTextAr: e.target.value })}
+            />
+          </label>
+        </div>
+        <h2 className="section-gap">{t("sharedSettings")}</h2>
+        <div className="form-grid">
+          {field("heroImage", "heroImageL", "ltr")}
+          {field("contactEmail", "contactEmail", "ltr")}
+          {field("contactPhone", "contactPhone", "ltr")}
+        </div>
         <div className="actions">
           <button className="btn primary">
             <Save size={16} />
-            Save changes
+            {t("saveChanges")}
           </button>
         </div>
         {msg && <p>{msg}</p>}
@@ -697,7 +763,9 @@ function Content({ d }) {
     </>
   );
 }
+
 function Quotes({ d }) {
+  const { t, lang } = useLang();
   const [msg, M] = useState("");
   async function change(id, status) {
     try {
@@ -713,55 +781,63 @@ function Quotes({ d }) {
   return (
     <>
       <Title
-        k="CUSTOMER ENQUIRIES"
-        title="Quote requests"
-        desc="Review requests and update their status."
+        k={t("enquiriesK")}
+        title={t("quoteRequests")}
+        desc={t("quotesDesc")}
       />
       {msg && <p>{msg}</p>}
       <div className="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>Customer</th>
-              <th>Product</th>
-              <th>Message</th>
-              <th>Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {d.quotes.map((q) => (
-              <tr key={q._id}>
-                <td>
-                  {q.name}
-                  <small>{q.email}</small>
-                  <small>
-                    {q.company} {q.phone}
-                  </small>
-                </td>
-                <td>{q.product || "General enquiry"}</td>
-                <td>{q.message}</td>
-                <td>{new Date(q.createdAt).toLocaleDateString()}</td>
-                <td>
-                  <select
-                    value={q.status}
-                    onChange={(e) => change(q._id, e.target.value)}
-                  >
-                    <option>new</option>
-                    <option>contacted</option>
-                    <option>closed</option>
-                  </select>
-                </td>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{t("customer")}</th>
+                <th>{t("product")}</th>
+                <th>{t("message")}</th>
+                <th>{t("date")}</th>
+                <th>{t("status")}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {!d.quotes.length && <p className="empty">No quote requests yet.</p>}
+            </thead>
+            <tbody>
+              {d.quotes.map((q) => (
+                <tr key={q._id}>
+                  <td>
+                    {q.name}
+                    <small dir="ltr">{q.email}</small>
+                    <small>
+                      {q.company} <span dir="ltr">{q.phone}</span>
+                    </small>
+                  </td>
+                  <td>{q.product || t("generalEnquiry")}</td>
+                  <td>{q.message}</td>
+                  <td>
+                    {new Date(q.createdAt).toLocaleDateString(locale(lang))}
+                  </td>
+                  <td>
+                    <select
+                      value={q.status}
+                      onChange={(e) => change(q._id, e.target.value)}
+                    >
+                      {["new", "contacted", "closed"].map((s) => (
+                        <option key={s} value={s}>
+                          {t(`st_${s}`)}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {!d.quotes.length && <p className="empty">{t("noQuotes")}</p>}
       </div>
     </>
   );
 }
+
 function Admin() {
+  const { t } = useLang();
   const nav = useNavigate(),
     [checking, C] = useState(true),
     [ok, O] = useState(false),
@@ -773,7 +849,7 @@ function Admin() {
       .catch(() => O(false))
       .finally(() => C(false));
   }, []);
-  if (checking) return <div className="loading">Checking session…</div>;
+  if (checking) return <div className="loading">{t("checkingSession")}</div>;
   if (!ok) return <Navigate to="/admin/login" replace />;
   const active =
     path === "/admin"
@@ -792,7 +868,7 @@ function Admin() {
       }}
     >
       {d.loading ? (
-        <div className="loading">Loading dashboard…</div>
+        <div className="loading">{t("loadingDashboard")}</div>
       ) : (
         <Routes>
           <Route index element={<Overview d={d} />} />
@@ -805,6 +881,7 @@ function Admin() {
     </AdminShell>
   );
 }
+
 export default function App() {
   return (
     <Routes>

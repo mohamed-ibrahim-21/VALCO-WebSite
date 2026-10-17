@@ -304,10 +304,11 @@ footer {
 }
 .sidebar {
   position: fixed;
-  inset: 0 auto 0 0;
+  inset-block: 0;
+  inset-inline-start: 0;
   width: 245px;
   background: white;
-  border-right: 1px solid var(--line);
+  border-inline-end: 1px solid var(--line);
   padding: 25px 16px;
   display: flex;
   flex-direction: column;
@@ -331,7 +332,7 @@ footer {
   color: #64758a;
   font-size: 13px;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
 }
 .nav.active,
 .nav:hover {
@@ -346,7 +347,7 @@ footer {
   flex-direction: column;
 }
 .admin-main {
-  margin-left: 245px;
+  margin-inline-start: 245px;
 }
 .top {
   height: 68px;
@@ -360,7 +361,7 @@ footer {
   font-size: 13px;
 }
 .top span {
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 .admin-content {
   padding: 32px;
@@ -427,7 +428,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
-  text-align: left;
+  text-align: start;
 }
 th {
   font-size: 10px;
@@ -591,7 +592,7 @@ td {
     width: 215px;
   }
   .admin-main {
-    margin-left: 215px;
+    margin-inline-start: 215px;
   }
   .admin-content {
     padding: 22px;
@@ -643,7 +644,7 @@ td {
     box-shadow: 20px 0 50px #11254422;
   }
   .admin-main {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
   .mobile {
     display: block;
@@ -680,5 +681,64 @@ td {
   }
   table {
     min-width: 620px;
+  }
+}
+
+/* ---------- Language / RTL ---------- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lang-toggle {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 9px 13px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lang-toggle:hover {
+  background: #edf2fc;
+  color: var(--blue);
+}
+.login-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.content-panel h2 {
+  margin-bottom: 14px;
+}
+.content-panel .section-gap {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+html[dir="rtl"] body,
+html[dir="rtl"] button,
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  font-family: Cairo, Inter, Arial, sans-serif;
+}
+html[dir="rtl"] .eyebrow,
+html[dir="rtl"] .pill,
+html[dir="rtl"] th {
+  letter-spacing: 0;
+}
+@media (max-width: 620px) {
+  html[dir="rtl"] .sidebar {
+    transform: translateX(100%);
+  }
+  html[dir="rtl"] .sidebar.open {
+    transform: translateX(0);
+    box-shadow: -20px 0 50px #11254422;
+  }
+  .header-actions .btn {
+    display: none;
   }
 }

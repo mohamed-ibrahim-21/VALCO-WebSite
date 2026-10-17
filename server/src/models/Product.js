@@ -12,6 +12,7 @@ const schema = new mongoose.Schema(
       ar: { type: String, default: "" },
     },
     category: { type: String, default: "Valves" },
+    categoryAr: { type: String, default: "" },
     image: { type: String, default: "" },
     gallery: { type: [String], default: [] },
     options: { type: mongoose.Schema.Types.Mixed, default: {} },
