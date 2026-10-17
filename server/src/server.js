@@ -38,8 +38,9 @@ app.use((err, req, res, next) => {
 });
 const port = Number(process.env.PORT || 5000);
 async function start() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log("MongoDB connected");
+  const dbName = process.env.MONGODB_DB || "VALCO";
+  await mongoose.connect(process.env.MONGODB_URI, { dbName });
+  console.log(`MongoDB connected (database: ${dbName})`);
   const email = String(process.env.ADMIN_EMAIL || "")
       .trim()
       .toLowerCase(),
