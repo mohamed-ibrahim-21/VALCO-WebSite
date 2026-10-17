@@ -1068,3 +1068,20 @@ td small b {
     flex-direction: column;
   }
 }
+
+/* ---------- Admin: account ---------- */
+.account-panel {
+  max-width: 560px;
+}
+.field-hint {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.account-actions {
+  justify-content: space-between;
+}
+.success {
+  color: #1f7a45;
+  font-size: 13px;
+}

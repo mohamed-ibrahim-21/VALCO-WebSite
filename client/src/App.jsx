@@ -17,11 +17,13 @@ import {
   ExternalLink,
   Menu,
   Languages,
+  KeyRound,
 } from "lucide-react";
 import { api, imageUrl } from "./api";
 import { useLang, pick, siteText, LangToggle } from "./i18n.jsx";
 import { Header, SiteFooter } from "./Layout.jsx";
 import ProductPage from "./ProductPage.jsx";
+import Account from "./Account.jsx";
 import ProductExtrasEditor, { toEditable, fromEditable } from "./ProductExtrasEditor.jsx";
 
 const locale = (lang) => (lang === "ar" ? "ar-EG" : "en-GB");
@@ -254,6 +256,7 @@ function AdminShell({ children, active, logout }) {
       ["/admin/products", "products", Package],
       ["/admin/content", "websiteContent", Settings],
       ["/admin/quotes", "quoteRequests", ClipboardList],
+      ["/admin/account", "account", KeyRound],
     ];
   return (
     <div className="admin">
@@ -854,7 +857,9 @@ function Admin() {
         ? "/admin/products"
         : path.startsWith("/admin/content")
           ? "/admin/content"
-          : "/admin/quotes";
+          : path.startsWith("/admin/account")
+            ? "/admin/account"
+            : "/admin/quotes";
   return (
     <AdminShell
       active={active}
@@ -871,6 +876,7 @@ function Admin() {
           <Route path="products" element={<Products d={d} />} />
           <Route path="content" element={<Content d={d} />} />
           <Route path="quotes" element={<Quotes d={d} />} />
+          <Route path="account" element={<Account />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       )}
