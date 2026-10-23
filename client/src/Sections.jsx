@@ -9,12 +9,10 @@ import {
   HardHat,
   Wrench,
   Headset,
-  Mail,
-  Phone,
 } from "lucide-react";
 import { api } from "./api";
 import { useLang, pick, siteText } from "./i18n.jsx";
-import { Arrow } from "./Layout.jsx";
+import { Arrow, ContactList, SocialLinks } from "./Layout.jsx";
 import { useCatalog, aboutImage } from "./catalog.js";
 
 // Sections shared by the homepage and the About / Services / Contact pages.
@@ -129,16 +127,8 @@ export function QuoteSection({ id }) {
           <span className="s-eyebrow">{t("talkEyebrow")}</span>
           <h2>{t("requestQuote")}</h2>
           <p>{t("contactDesc")}</p>
-          {site.contactEmail && (
-            <a href={`mailto:${site.contactEmail}`} className="with-icon" dir="ltr">
-              <Mail size={18} /> {site.contactEmail}
-            </a>
-          )}
-          {site.contactPhone && (
-            <a href={`tel:${site.contactPhone.replace(/\s+/g, "")}`} className="with-icon" dir="ltr">
-              <Phone size={18} /> {site.contactPhone}
-            </a>
-          )}
+          <ContactList site={site} />
+          <SocialLinks site={site} />
           <ol className="next-steps">
             <li>{t("next1")}</li>
             <li>{t("next2")}</li>

@@ -1360,3 +1360,81 @@ html[dir="rtl"] .cta-band::before {
     padding-block: 40px;
   }
 }
+
+/* ---------- Contact details & social links ---------- */
+.contact-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.contact-list li > svg {
+  flex-shrink: 0;
+  color: var(--s-red);
+}
+.contact-list span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+.contact-list small {
+  font-size: 11.5px;
+  letter-spacing: 0.4px;
+  color: #8e9bb0;
+}
+html[dir="rtl"] .contact-list a {
+  text-align: right;
+}
+.contact-card .contact-list a {
+  color: #fff;
+  font-size: 15.5px;
+}
+.contact-card .contact-list a:hover,
+.site-footer .contact-list a:hover {
+  color: #ffb3b5;
+}
+.site-footer .contact-list a {
+  color: #dbe2ec;
+}
+.social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.contact-card .social-links {
+  margin-top: 22px;
+}
+.social-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid #ffffff33;
+  color: #fff;
+  transition: background 0.2s, border-color 0.2s;
+}
+.social-links a:hover .social-icon {
+  background: var(--s-red);
+  border-color: var(--s-red);
+}
+.social-links.named {
+  flex-direction: column;
+  gap: 10px;
+}
+.social-links.named a {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.social-links.named .social-icon {
+  width: 34px;
+  height: 34px;
+}

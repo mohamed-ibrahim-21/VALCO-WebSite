@@ -28,6 +28,7 @@ import { AboutPage, ServicesPage, ContactPage } from "./Pages.jsx";
 import AdminCategories from "./AdminCategories.jsx";
 import { loadCatalog } from "./catalog.js";
 import ProductPage from "./ProductPage.jsx";
+import { SOCIAL } from "./Layout.jsx";
 import Account from "./Account.jsx";
 import ProductExtrasEditor, { toEditable, fromEditable } from "./ProductExtrasEditor.jsx";
 
@@ -629,8 +630,27 @@ function Content({ d }) {
         <div className="form-grid">
           {imageField("heroImage", "heroImageL")}
           {imageField("aboutImage", "aboutImageL")}
-          {field("contactEmail", "contactEmail", "ltr")}
-          {field("contactPhone", "contactPhone", "ltr")}
+        </div>
+        <h2 className="section-gap">{t("contactDetails")}</h2>
+        <div className="form-grid">
+          {field("contactLandline", "landline", "ltr")}
+          {field("contactPhone", "mobile", "ltr")}
+          {field("contactEmail", "email", "ltr")}
+        </div>
+        <h2 className="section-gap">{t("socialMedia")}</h2>
+        <p className="field-hint">{t("socialHelp")}</p>
+        <div className="form-grid">
+          {SOCIAL.map(([k, name]) => (
+            <label key={k}>
+              {name}
+              <input
+                dir="ltr"
+                placeholder="https://"
+                value={f[k] || ""}
+                onChange={(e) => F({ ...f, [k]: e.target.value })}
+              />
+            </label>
+          ))}
         </div>
         <div className="actions">
           <button className="btn primary">

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, Globe, ChevronDown, Menu, X, Mail, Phone, ArrowRight } from "lucide-react";
+import { Search, Globe, ChevronDown, Menu, X, Mail, Phone, Smartphone, ArrowRight } from "lucide-react";
 import { useLang, siteText, pick } from "./i18n.jsx";
 import { useCatalog, heroImage } from "./catalog.js";
 
@@ -28,6 +28,76 @@ export function Logo({ site, light = false }) {
         <small>{siteText(site, "tagline", lang, t("tagline"))}</small>
       </span>
     </Link>
+  );
+}
+
+const tel = (n) => `tel:${String(n).replace(/[^\d+]/g, "")}`;
+
+// Landline, mobile and email from the admin "Website content" page; empty ones are hidden.
+export function ContactList({ site, size = 18, labels = true }) {
+  const { t } = useLang();
+  const rows = [
+    [Phone, "landline", site.contactLandline, tel],
+    [Smartphone, "mobile", site.contactPhone, tel],
+    [Mail, "email", site.contactEmail, (v) => `mailto:${v}`],
+  ].filter(([, , v]) => v?.trim());
+  if (!rows.length) return null;
+  return (
+    <ul className="contact-list">
+      {rows.map(([Icon, k, v, href]) => (
+        <li key={k}>
+          <Icon size={size} />
+          <span>
+            {labels && <small>{t(k)}</small>}
+            <a href={href(v.trim())} dir="ltr">
+              {v.trim()}
+            </a>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const ICONS = {
+  facebookUrl: <path d="M14 8.6V6.9c0-.8.2-1.3 1.4-1.3H17V2.7c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v1.7H7.6v3.2h2.7V21h3.4v-9.2h2.8l.4-3.2H14z" />,
+  instagramUrl: (
+    <g fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" />
+    </g>
+  ),
+  tiktokUrl: <path d="M16.2 2.5c.4 2.4 1.9 4 4.3 4.2v3.3c-1.6 0-3-.5-4.3-1.3v6.7a6 6 0 1 1-6-6c.3 0 .7 0 1 .1v3.4a2.7 2.7 0 1 0 1.8 2.5V2.5h3.2z" />,
+  xUrl: <path d="M17.6 3h3.1l-6.8 7.7 8 10.3h-6.2l-4.9-6.3L5.2 21H2.1l7.3-8.3L1.7 3H8l4.4 5.8L17.6 3zm-1.1 16.2h1.7L7.4 4.7H5.6l10.9 14.5z" />,
+  linkedinUrl: <path d="M4 9h3.6v11.5H4V9zm1.8-5.8a2.1 2.1 0 1 1 0 4.2 2.1 2.1 0 0 1 0-4.2zM10 9h3.4v1.6h.1c.5-.9 1.7-1.9 3.4-1.9 3.7 0 4.3 2.4 4.3 5.5v6.3h-3.6v-5.6c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9v5.7H10V9z" />,
+};
+export const SOCIAL = [
+  ["facebookUrl", "Facebook"],
+  ["instagramUrl", "Instagram"],
+  ["tiktokUrl", "TikTok"],
+  ["xUrl", "X"],
+  ["linkedinUrl", "LinkedIn"],
+];
+const fullUrl = (u) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
+
+// Social accounts set in the admin panel; accounts without a link are hidden.
+export function SocialLinks({ site, withNames = false }) {
+  const list = SOCIAL.filter(([k]) => site[k]?.trim());
+  if (!list.length) return null;
+  return (
+    <div className={withNames ? "social-links named" : "social-links"}>
+      {list.map(([k, name]) => (
+        <a key={k} href={fullUrl(site[k].trim())} target="_blank" rel="noreferrer" aria-label={name} title={name}>
+          <span className="social-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+              {ICONS[k]}
+            </svg>
+          </span>
+          {withNames && <span>{name}</span>}
+        </a>
+      ))}
+    </div>
   );
 }
 
@@ -143,7 +213,7 @@ export function Header() {
 
 export function SiteFooter() {
   const { t, lang } = useLang();
-  const { site, categories } = useCatalog();
+  const { site } = useCatalog();
   return (
     <footer className="site-footer">
       <div className="site-wrap footer-grid">
@@ -160,25 +230,12 @@ export function SiteFooter() {
           <Link to="/contact">{t("navContact")}</Link>
         </div>
         <div>
-          <h4>{t("navProducts")}</h4>
-          {categories.map((c) => (
-            <Link key={c._id} to={`/category/${c.slug}`}>
-              {pick(c.name, lang)}
-            </Link>
-          ))}
+          <h4>{t("socialMedia")}</h4>
+          <SocialLinks site={site} withNames />
         </div>
         <div>
           <h4>{t("contactInfo")}</h4>
-          {site.contactEmail && (
-            <a href={`mailto:${site.contactEmail}`} className="with-icon" dir="ltr">
-              <Mail size={16} /> {site.contactEmail}
-            </a>
-          )}
-          {site.contactPhone && (
-            <a href={`tel:${site.contactPhone.replace(/\s+/g, "")}`} className="with-icon" dir="ltr">
-              <Phone size={16} /> {site.contactPhone}
-            </a>
-          )}
+          <ContactList site={site} size={16} />
           <Link to="/contact" className="footer-cta">
             {t("requestQuote")} <Arrow size={14} />
           </Link>

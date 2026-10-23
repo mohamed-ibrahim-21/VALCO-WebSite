@@ -34,7 +34,13 @@ const schema = new mongoose.Schema(
         "تقدم VALCO محابس صناعية ومواسير وحلولًا متكاملة عالية الجودة، مع التركيز على الاعتمادية والخبرة الفنية والشراكات طويلة المدى. نتعامل مع مصنعين موثوقين لتوفير المنتجات المناسبة لمشروعاتك.",
     },
     contactEmail: { type: String, default: "" },
-    contactPhone: { type: String, default: "" },
+    contactPhone: { type: String, default: "" }, // mobile
+    contactLandline: { type: String, default: "" },
+    facebookUrl: { type: String, default: "" },
+    instagramUrl: { type: String, default: "" },
+    tiktokUrl: { type: String, default: "" },
+    xUrl: { type: String, default: "" },
+    linkedinUrl: { type: String, default: "" },
   },
   { timestamps: true },
 );
