@@ -245,7 +245,7 @@ export function SiteFooter() {
         <span>
           © {new Date().getFullYear()} {companyName(site, lang)}. {t("rights")}
         </span>
-        <Link to="/admin/login">{t("admin")}</Link>
+        <span className="footer-credit">Evildeal</span>
       </div>
     </footer>
   );
