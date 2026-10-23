@@ -20,7 +20,7 @@ export default function Catalog() {
     api(slug ? `/api/products?category=${encodeURIComponent(slug)}` : "/api/products")
       .then(setProducts)
       .catch((e) => setError(e.message));
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
 
   const category = slug ? categories.find((c) => c.slug === slug) : null;
@@ -51,7 +51,7 @@ export default function Catalog() {
         )}
 
         {error && <p className="error">{error}</p>}
-        {!products && !error && <p className="muted">{t("loading")}</p>}
+        {!products && !error && <p className="s-soft">{t("loading")}</p>}
 
         {products && products.length > 0 && (
           <div className="prod-grid">
@@ -85,9 +85,12 @@ export default function Catalog() {
           <div className="empty-box">
             {category && <img src={categoryImage(category)} alt="" />}
             <p>{t("noProductsInCategory")}</p>
-            <a href="/#contact" className="s-btn red sm">
+            <Link
+              to={category ? `/contact?product=${encodeURIComponent(category.name.en)}` : "/contact"}
+              className="s-btn red sm"
+            >
               {t("requestQuote")} <Arrow size={14} />
-            </a>
+            </Link>
           </div>
         )}
       </section>

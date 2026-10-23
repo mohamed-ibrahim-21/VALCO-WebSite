@@ -24,6 +24,7 @@ import { api, imageUrl } from "./api";
 import { useLang, pick, LangToggle } from "./i18n.jsx";
 import Home from "./Home.jsx";
 import Catalog from "./Catalog.jsx";
+import { AboutPage, ServicesPage, ContactPage } from "./Pages.jsx";
 import AdminCategories from "./AdminCategories.jsx";
 import { loadCatalog } from "./catalog.js";
 import ProductPage from "./ProductPage.jsx";
@@ -783,6 +784,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/services" element={<ServicesPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route path="/products" element={<Catalog />} />
       <Route path="/category/:slug" element={<Catalog />} />
       <Route path="/products/:slug" element={<ProductPage />} />

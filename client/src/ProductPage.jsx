@@ -28,7 +28,7 @@ export default function ProductPage() {
         setActive(p.image || p.gallery?.[0] || (p.categorySlug ? categoryImage({ slug: p.categorySlug }) : ""));
       })
       .catch(() => setLoadError(t("productNotFound")));
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
 
   if (loadError)

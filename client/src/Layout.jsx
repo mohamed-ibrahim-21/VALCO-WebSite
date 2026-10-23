@@ -81,13 +81,17 @@ export function Header() {
   const { pathname, hash } = useLocation();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname, hash]);
+  // New page: start at the top (homepage links with #section scroll themselves).
+  useEffect(() => {
+    if (!hash) window.scrollTo({ top: 0, behavior: "instant" });
+  }, [pathname]);
 
   const onProducts = pathname.startsWith("/products") || pathname.startsWith("/category");
-  const current = onProducts ? "products" : pathname === "/" ? (hash || "#home").slice(1) : "";
+  const current = onProducts ? "products" : pathname === "/" ? "home" : pathname.slice(1);
   const link = (id, label) => (
-    <a href={`/#${id}`} className={current === id ? "active" : ""}>
+    <Link to={id === "home" ? "/" : `/${id}`} className={current === id ? "active" : ""}>
       {t(label)}
-    </a>
+    </Link>
   );
 
   return (
@@ -114,14 +118,14 @@ export function Header() {
           </div>
           {link("services", "navServices")}
           {link("contact", "navContact")}
-          <a href="/#contact" className="btn-quote mobile-only">
+          <Link to="/contact" className="btn-quote mobile-only">
             <Search size={17} /> {t("getQuote")}
-          </a>
+          </Link>
         </nav>
         <div className="header-tools">
-          <a href="/#contact" className="btn-quote">
+          <Link to="/contact" className="btn-quote">
             <Search size={17} /> {t("getQuote")}
-          </a>
+          </Link>
           <LangMenu />
           <button
             type="button"
@@ -149,11 +153,11 @@ export function SiteFooter() {
         </div>
         <div>
           <h4>{t("quickLinks")}</h4>
-          <a href="/#home">{t("navHome")}</a>
-          <a href="/#about">{t("navAbout")}</a>
+          <Link to="/">{t("navHome")}</Link>
+          <Link to="/about">{t("navAbout")}</Link>
           <Link to="/products">{t("navProducts")}</Link>
-          <a href="/#services">{t("navServices")}</a>
-          <a href="/#contact">{t("navContact")}</a>
+          <Link to="/services">{t("navServices")}</Link>
+          <Link to="/contact">{t("navContact")}</Link>
         </div>
         <div>
           <h4>{t("navProducts")}</h4>
@@ -175,9 +179,9 @@ export function SiteFooter() {
               <Phone size={16} /> {site.contactPhone}
             </a>
           )}
-          <a href="/#contact" className="footer-cta">
+          <Link to="/contact" className="footer-cta">
             {t("requestQuote")} <Arrow size={14} />
-          </a>
+          </Link>
         </div>
       </div>
       <div className="site-wrap footer-bottom">
