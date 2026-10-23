@@ -44,7 +44,15 @@ r.put("/", requireAdmin, async (req, res, next) => {
       ],
       data = {};
     for (const k of allowed)
-      if (req.body[k] !== undefined) data[k] = req.body[k];
+      if (req.body[k] !== undefined) data[k] = String(req.body[k] ?? "").slice(0, 2000);
+    if (Array.isArray(req.body.stats))
+      data.stats = req.body.stats.slice(0, 4).map((s) => ({
+        value: String(s?.value ?? "").trim().slice(0, 20),
+        label: {
+          en: String(s?.label?.en ?? "").trim().slice(0, 60),
+          ar: String(s?.label?.ar ?? "").trim().slice(0, 60),
+        },
+      }));
     res.json(
       await Site.findOneAndUpdate(
         { key: "main" },

@@ -12,6 +12,7 @@ import site from "./routes/site.js";
 import quotes from "./routes/quotes.js";
 import upload from "./routes/upload.js";
 import categories from "./routes/categories.js";
+import downloads from "./routes/downloads.js";
 import { ensureDefaults } from "./defaults.js";
 const app = express(),
   dir = path.dirname(fileURLToPath(import.meta.url));
@@ -31,6 +32,7 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", auth);
 app.use("/api/products", products);
 app.use("/api/categories", categories);
+app.use("/api/downloads", downloads);
 app.use("/api/site", site);
 app.use("/api/quotes", quotes);
 app.use("/api/upload", upload);
@@ -41,7 +43,7 @@ app.use((err, req, res, next) => {
   if (err.name === "CastError")
     return res.status(400).json({ message: "Invalid ID." });
   if (err.code === "LIMIT_FILE_SIZE")
-    return res.status(400).json({ message: "Image must be 5 MB or smaller." });
+    return res.status(400).json({ message: "The file is too large." });
   res.status(500).json({ message: "Server error. Check server terminal." });
 });
 const port = Number(process.env.PORT || 5000);

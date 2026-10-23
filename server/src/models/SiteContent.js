@@ -5,34 +5,54 @@ const schema = new mongoose.Schema(
     companyName: { type: String, default: "VALCO" },
     tagline: { type: String, default: "VALVE MAINTENANCE & TESTING" },
     // The hero headline is shown as heroTitle followed by heroHighlight in red.
-    heroTitle: { type: String, default: "Reliable Valves for a" },
-    heroHighlight: { type: String, default: "Safer Tomorrow" },
+    // Words between *asterisks* are shown in red. heroHighlight is an optional red ending.
+    heroTitle: { type: String, default: "VALVES. *PIPES.* *FITTINGS.* SERVICES." },
+    heroHighlight: { type: String, default: "" },
     heroSubtitle: {
       type: String,
       default:
-        "High-quality industrial valves, fittings, flanges and piping materials, backed by expert maintenance and testing to keep your projects running safely.",
+        "Your trusted partner for high-quality industrial valves, pipes, fittings and services across oil & gas, power, water and industrial sectors.",
     },
     heroImage: { type: String, default: "" },
     aboutText: {
       type: String,
       default:
-        "VALCO provides high-quality industrial valves, piping materials and related solutions with a focus on reliability, technical expertise and long-term partnerships. We work with trusted manufacturers to deliver the right products for your projects.",
+        "VALCO is a trusted supplier and service provider of valves, pipes, fittings and related industrial solutions, serving multiple industries with a focus on quality, reliability and customer satisfaction.",
     },
     aboutImage: { type: String, default: "" },
     companyNameAr: { type: String, default: "" },
     taglineAr: { type: String, default: "صيانة واختبار المحابس" },
-    heroTitleAr: { type: String, default: "محابس موثوقة" },
-    heroHighlightAr: { type: String, default: "لغدٍ أكثر أمانًا" },
+    heroTitleAr: { type: String, default: "محابس. *مواسير.* *وصلات.* خدمات." },
+    heroHighlightAr: { type: String, default: "" },
     heroSubtitleAr: {
       type: String,
       default:
-        "محابس صناعية ووصلات وفلانشات ومواسير عالية الجودة، مدعومة بخدمات صيانة واختبار متخصصة للحفاظ على سلامة مشروعاتك.",
+        "شريكك الموثوق في المحابس والمواسير والوصلات والخدمات الصناعية عالية الجودة لقطاعات البترول والغاز والطاقة والمياه والصناعة.",
     },
     aboutTextAr: {
       type: String,
       default:
-        "تقدم VALCO محابس صناعية ومواسير وحلولًا متكاملة عالية الجودة، مع التركيز على الاعتمادية والخبرة الفنية والشراكات طويلة المدى. نتعامل مع مصنعين موثوقين لتوفير المنتجات المناسبة لمشروعاتك.",
+        "VALCO مورد ومقدم خدمات موثوق للمحابس والمواسير والوصلات والحلول الصناعية، نخدم قطاعات متعددة مع التركيز على الجودة والاعتمادية ورضا العملاء.",
     },
+    // Four "numbers" cards in the About section; a card with an empty value is hidden.
+    stats: {
+      type: [
+        new mongoose.Schema(
+          {
+            value: { type: String, default: "" },
+            label: { en: { type: String, default: "" }, ar: { type: String, default: "" } },
+          },
+          { _id: false },
+        ),
+      ],
+      default: () => [
+        { value: "", label: { en: "Products", ar: "منتج" } },
+        { value: "", label: { en: "Happy Clients", ar: "عميل راضٍ" } },
+        { value: "", label: { en: "Industries Served", ar: "قطاع نخدمه" } },
+        { value: "", label: { en: "Support", ar: "دعم فني" } },
+      ],
+    },
+    catalogVersion: { type: Number, default: 0 },
     contactEmail: { type: String, default: "" },
     contactPhone: { type: String, default: "" }, // mobile
     contactLandline: { type: String, default: "" },

@@ -10,6 +10,7 @@ const blank = () => ({
   image: "",
   order: 0,
   active: true,
+  parent: "",
 });
 
 export default function AdminCategories({ d }) {
@@ -79,7 +80,10 @@ export default function AdminCategories({ d }) {
       )}
 
       <div className="cat-admin-grid">
-        {d.categories.map((c) => (
+        {d.categories
+          .filter((c) => !c.parent)
+          .flatMap((m) => [m, ...d.categories.filter((c) => c.parent === m.slug)])
+          .map((c) => (
           <div key={c._id} className={c.active ? "cat-admin" : "cat-admin off"}>
             <div className="cat-admin-img">
               <img src={categoryImage(c)} alt="" />
@@ -87,6 +91,11 @@ export default function AdminCategories({ d }) {
             </div>
             <b>{pick(c.name, lang)}</b>
             <small>
+              {c.parent && (
+                <span className="sub-badge">
+                  {t("subOf")} {pick(d.categories.find((m) => m.slug === c.parent)?.name, lang) || c.parent}
+                </span>
+              )}
               {c.productCount || 0} {t("productsCount")} · {c.active ? t("visible") : t("hidden")}
             </small>
             <div className="cat-admin-actions">
@@ -157,6 +166,19 @@ export default function AdminCategories({ d }) {
                   </span>
                 </div>
                 <span className="field-hint">{t("categoryImageHelp")}</span>
+              </label>
+              <label className="full">
+                {t("parentCategory")}
+                <select value={edit.parent || ""} onChange={(e) => setEdit({ ...edit, parent: e.target.value })}>
+                  <option value="">{t("isMainCategory")}</option>
+                  {d.categories
+                    .filter((c) => !c.parent && c.slug !== edit.slug)
+                    .map((c) => (
+                      <option key={c._id} value={c.slug}>
+                        {pick(c.name, lang)}
+                      </option>
+                    ))}
+                </select>
               </label>
               <label>
                 {t("displayOrder")}

@@ -19,13 +19,15 @@ import {
   Languages,
   KeyRound,
   FolderTree,
+  FileDown,
 } from "lucide-react";
 import { api, imageUrl } from "./api";
 import { useLang, pick, LangToggle } from "./i18n.jsx";
 import Home from "./Home.jsx";
 import Catalog from "./Catalog.jsx";
-import { AboutPage, ServicesPage, ContactPage } from "./Pages.jsx";
+import { AboutPage, ServicesPage, ContactPage, IndustriesPage, DownloadsPage } from "./Pages.jsx";
 import AdminCategories from "./AdminCategories.jsx";
+import AdminDownloads from "./AdminDownloads.jsx";
 import { loadCatalog } from "./catalog.js";
 import ProductPage from "./ProductPage.jsx";
 import { SOCIAL } from "./Layout.jsx";
@@ -110,6 +112,7 @@ function AdminShell({ children, active, logout }) {
       ["/admin", "overview", LayoutDashboard],
       ["/admin/products", "products", Package],
       ["/admin/categories", "categories", FolderTree],
+      ["/admin/downloads", "navDownloads", FileDown],
       ["/admin/content", "websiteContent", Settings],
       ["/admin/quotes", "quoteRequests", ClipboardList],
       ["/admin/account", "account", KeyRound],
@@ -435,11 +438,27 @@ function Products({ d }) {
                   onChange={(e) => E({ ...edit, categorySlug: e.target.value })}
                 >
                   <option value="">{t("noCategory")}</option>
-                  {d.categories.map((c) => (
-                    <option key={c._id} value={c.slug}>
-                      {pick(c.name, lang)}
-                    </option>
-                  ))}
+                  {d.categories
+                    .filter((c) => !c.parent)
+                    .map((m) => {
+                      const subs = d.categories.filter((c) => c.parent === m.slug);
+                      return subs.length ? (
+                        <optgroup key={m._id} label={pick(m.name, lang)}>
+                          <option value={m.slug}>
+                            {pick(m.name, lang)} ({t("allOf")})
+                          </option>
+                          {subs.map((c) => (
+                            <option key={c._id} value={c.slug}>
+                              {pick(c.name, lang)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ) : (
+                        <option key={m._id} value={m.slug}>
+                          {pick(m.name, lang)}
+                        </option>
+                      );
+                    })}
                 </select>
               </label>
               <label className="full">
@@ -547,7 +566,6 @@ function Content({ d }) {
     ["companyName", "companyName"],
     ["tagline", "taglineL"],
     ["heroTitle", "heroTitleL"],
-    ["heroHighlight", "heroHighlightL"],
     ["heroSubtitle", "heroSubtitleL"],
   ];
   const field = (k, label, dir) => (
@@ -558,8 +576,12 @@ function Content({ d }) {
         value={f[k] || ""}
         onChange={(e) => F({ ...f, [k]: e.target.value })}
       />
+      {k.startsWith("heroTitle") && <span className="field-hint">{t("heroTitleHelp")}</span>}
     </label>
   );
+  const stats = f.stats || [];
+  const setStat = (i, patch) =>
+    F((x) => ({ ...x, stats: (x.stats || []).map((s, j) => (j === i ? { ...s, ...patch } : s)) }));
   async function uploadTo(k, file) {
     const fd = new FormData();
     fd.append("image", file);
@@ -630,6 +652,26 @@ function Content({ d }) {
         <div className="form-grid">
           {imageField("heroImage", "heroImageL")}
           {imageField("aboutImage", "aboutImageL")}
+        </div>
+        <h2 className="section-gap">{t("statsTitle")}</h2>
+        <p className="field-hint">{t("statsHelp")}</p>
+        <div className="stats-edit">
+          {stats.map((s, i) => (
+            <div key={i} className="stat-edit-row">
+              <label>
+                {t("statValue")}
+                <input dir="ltr" placeholder="500+" value={s.value || ""} onChange={(e) => setStat(i, { value: e.target.value })} />
+              </label>
+              <label>
+                {t("statLabelEn")}
+                <input dir="ltr" value={s.label?.en || ""} onChange={(e) => setStat(i, { label: { ...s.label, en: e.target.value } })} />
+              </label>
+              <label>
+                {t("statLabelAr")}
+                <input dir="rtl" value={s.label?.ar || ""} onChange={(e) => setStat(i, { label: { ...s.label, ar: e.target.value } })} />
+              </label>
+            </div>
+          ))}
         </div>
         <h2 className="section-gap">{t("contactDetails")}</h2>
         <div className="form-grid">
@@ -768,6 +810,8 @@ function Admin() {
       ? "/admin"
       : path.startsWith("/admin/products")
         ? "/admin/products"
+        : path.startsWith("/admin/downloads")
+          ? "/admin/downloads"
         : path.startsWith("/admin/categories")
           ? "/admin/categories"
         : path.startsWith("/admin/content")
@@ -790,6 +834,7 @@ function Admin() {
           <Route index element={<Overview d={d} />} />
           <Route path="products" element={<Products d={d} />} />
           <Route path="categories" element={<AdminCategories d={d} />} />
+          <Route path="downloads" element={<AdminDownloads />} />
           <Route path="content" element={<Content d={d} />} />
           <Route path="quotes" element={<Quotes d={d} />} />
           <Route path="account" element={<Account />} />
@@ -807,6 +852,8 @@ export default function App() {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/contact" element={<ContactPage />} />
+      <Route path="/industries" element={<IndustriesPage />} />
+      <Route path="/downloads" element={<DownloadsPage />} />
       <Route path="/products" element={<Catalog />} />
       <Route path="/category/:slug" element={<Catalog />} />
       <Route path="/products/:slug" element={<ProductPage />} />

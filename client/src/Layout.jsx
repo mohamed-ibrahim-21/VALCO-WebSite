@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Globe, ChevronDown, Menu, X, Mail, Phone, Smartphone, ArrowRight } from "lucide-react";
 import { useLang, siteText, pick } from "./i18n.jsx";
-import { useCatalog, heroImage } from "./catalog.js";
+import { useCatalog, heroImage, categoryLink } from "./catalog.js";
+import { SERVICES, INDUSTRIES } from "./content.js";
 
 export function companyName(site, lang) {
   return siteText(site, "companyName", lang, site.companyName || "VALCO");
@@ -101,6 +102,22 @@ export function SocialLinks({ site, withNames = false }) {
   );
 }
 
+// Text where words between *asterisks* are shown in red.
+export function Marked({ text = "" }) {
+  return String(text)
+    .split(/(\*[^*]+\*)/)
+    .filter(Boolean)
+    .map((part, i) =>
+      part.startsWith("*") && part.endsWith("*") ? (
+        <span key={i} className="hl">
+          {part.slice(1, -1)}
+        </span>
+      ) : (
+        <React.Fragment key={i}>{part}</React.Fragment>
+      ),
+    );
+}
+
 // Arrow that points the reading direction (flips in Arabic).
 export const Arrow = ({ size = 16 }) => <ArrowRight size={size} className="dir-arrow" />;
 
@@ -144,17 +161,69 @@ function LangMenu() {
   );
 }
 
-// Section links start with "/" so they also work from other pages.
+// Search box that opens under the header and searches the product catalog.
+function SearchBar({ onClose }) {
+  const { t } = useLang();
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  return (
+    <form
+      className="search-bar"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (q.trim()) navigate(`/products?q=${encodeURIComponent(q.trim())}`);
+        onClose();
+      }}
+    >
+      <div className="site-wrap search-row">
+        <Search size={20} />
+        <input
+          autoFocus
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+          aria-label={t("search")}
+        />
+        <button type="submit" className="s-btn red sm">
+          {t("search")}
+        </button>
+        <button type="button" className="search-close" onClick={onClose} aria-label="Close">
+          <X size={20} />
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function Drop({ to, label, active, items, footer }) {
+  return (
+    <div className="nav-drop">
+      <Link to={to} className={active ? "active" : ""}>
+        {label} <ChevronDown size={14} />
+      </Link>
+      <div className="menu-pop drop-list">
+        {items}
+        {footer}
+      </div>
+    </div>
+  );
+}
+
 export function Header() {
   const { t, lang } = useLang();
   const { site, categories } = useCatalog();
   const { pathname, hash } = useLocation();
   const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
   useEffect(() => setOpen(false), [pathname, hash]);
-  // New page: start at the top (homepage links with #section scroll themselves).
+  // New page: start at the top (links with #section scroll themselves).
   useEffect(() => {
     if (!hash) window.scrollTo({ top: 0, behavior: "instant" });
   }, [pathname]);
+  // Same-page #section links (e.g. a Services menu item while on /services).
+  useEffect(() => {
+    if (hash) setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView(), 60);
+  }, [pathname, hash]);
 
   const onProducts = pathname.startsWith("/products") || pathname.startsWith("/category");
   const current = onProducts ? "products" : pathname === "/" ? "home" : pathname.slice(1);
@@ -163,6 +232,7 @@ export function Header() {
       {t(label)}
     </Link>
   );
+  const mains = categories.filter((c) => !c.parent);
 
   return (
     <header className="site-header">
@@ -171,30 +241,58 @@ export function Header() {
         <nav className={open ? "site-nav open" : "site-nav"}>
           {link("home", "navHome")}
           {link("about", "navAbout")}
-          <div className="nav-drop">
-            <Link to="/products" className={current === "products" ? "active" : ""}>
-              {t("navProducts")} <ChevronDown size={14} />
-            </Link>
-            <div className="menu-pop drop-list">
-              {categories.map((c) => (
-                <Link key={c._id} to={`/category/${c.slug}`}>
-                  {pick(c.name, lang)}
-                </Link>
-              ))}
+          <Drop
+            to="/products"
+            label={t("navProducts")}
+            active={current === "products"}
+            items={mains.map((c) => (
+              <Link key={c._id} to={categoryLink(c)}>
+                {pick(c.name, lang)}
+              </Link>
+            ))}
+            footer={
               <Link to="/products" className="drop-all">
                 {t("viewAllProducts")} <Arrow size={14} />
               </Link>
-            </div>
-          </div>
-          {link("services", "navServices")}
+            }
+          />
+          <Drop
+            to="/services"
+            label={t("navServices")}
+            active={current === "services"}
+            items={SERVICES.map(([id, , k]) => (
+              <Link key={id} to={`/services#${id}`}>
+                {t(k)}
+              </Link>
+            ))}
+          />
+          <Drop
+            to="/industries"
+            label={t("navIndustries")}
+            active={current === "industries"}
+            items={INDUSTRIES.map(([id, , k]) => (
+              <Link key={id} to={`/industries#${id}`}>
+                {t(k)}
+              </Link>
+            ))}
+          />
+          {link("downloads", "navDownloads")}
           {link("contact", "navContact")}
           <Link to="/contact" className="btn-quote mobile-only">
-            <Search size={17} /> {t("getQuote")}
+            {t("getQuote")} <Arrow size={16} />
           </Link>
         </nav>
         <div className="header-tools">
+          <button
+            type="button"
+            className="icon-tool"
+            aria-label={t("search")}
+            onClick={() => setSearching((s) => !s)}
+          >
+            <Search size={22} />
+          </button>
           <Link to="/contact" className="btn-quote">
-            <Search size={17} /> {t("getQuote")}
+            {t("getQuote")} <Arrow size={16} />
           </Link>
           <LangMenu />
           <button
@@ -207,6 +305,7 @@ export function Header() {
           </button>
         </div>
       </div>
+      {searching && <SearchBar onClose={() => setSearching(false)} />}
     </header>
   );
 }
@@ -227,6 +326,8 @@ export function SiteFooter() {
           <Link to="/about">{t("navAbout")}</Link>
           <Link to="/products">{t("navProducts")}</Link>
           <Link to="/services">{t("navServices")}</Link>
+          <Link to="/industries">{t("navIndustries")}</Link>
+          <Link to="/downloads">{t("navDownloads")}</Link>
           <Link to="/contact">{t("navContact")}</Link>
         </div>
         <div>

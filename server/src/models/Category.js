@@ -9,6 +9,8 @@ const schema = new mongoose.Schema(
     name: text,
     description: text,
     image: { type: String, default: "" },
+    // "" for a main category; otherwise the slug of its main category (e.g. gate-valves -> valves)
+    parent: { type: String, default: "", index: true },
     order: { type: Number, default: 0 },
     active: { type: Boolean, default: true },
   },

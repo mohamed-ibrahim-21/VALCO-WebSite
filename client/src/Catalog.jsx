@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Boxes } from "lucide-react";
 import { api, imageUrl } from "./api";
 import { useLang, pick } from "./i18n.jsx";
 import { Header, SiteFooter, PageBanner, Arrow } from "./Layout.jsx";
-import { useCatalog, categoryImage } from "./catalog.js";
+import { useCatalog, categoryImage, categoryLink } from "./catalog.js";
 
 // All products (/products) or one category (/category/:slug).
 export default function Catalog() {
   const { slug } = useParams();
+  const [params] = useSearchParams();
+  const q = (params.get("q") || "").trim();
   const { t, lang } = useLang();
   const { categories, ready } = useCatalog();
   const [products, setProducts] = useState(null),
@@ -24,9 +26,26 @@ export default function Catalog() {
   }, [slug]);
 
   const category = slug ? categories.find((c) => c.slug === slug) : null;
-  const title = category ? pick(category.name, lang) : t("ourProducts");
-  const crumbs = [[t("navHome"), "/"], [t("navProducts"), category ? "/products" : null]];
-  if (category) crumbs.push([title, null]);
+  // Main category of the page (a sub-category belongs to its parent's tab).
+  const main = category?.parent ? categories.find((c) => c.slug === category.parent) : category;
+  const mains = categories.filter((c) => !c.parent);
+  const subs = main ? categories.filter((c) => c.parent === main.slug) : [];
+  const title = q ? t("searchResults") : category ? pick(category.name, lang) : t("ourProducts");
+  const crumbs = [[t("navHome"), "/"], [t("navProducts"), category || q ? "/products" : null]];
+  if (main && main !== category) crumbs.push([pick(main.name, lang), `/category/${main.slug}`]);
+  if (category) crumbs.push([pick(category.name, lang), null]);
+  if (q) crumbs.push([`"${q}"`, null]);
+
+  const needle = q.toLowerCase();
+  const shown =
+    products && needle
+      ? products.filter((p) =>
+          [p.name?.en, p.name?.ar, p.sku, p.category, p.categoryAr, p.description?.en, p.description?.ar]
+            .join(" ")
+            .toLowerCase()
+            .includes(needle),
+        )
+      : products;
 
   return (
     <div className="site">
@@ -35,16 +54,29 @@ export default function Catalog() {
 
       <section className="s-catalog site-wrap">
         <div className="cat-tabs" role="tablist">
-          <Link to="/products" className={!slug ? "tab on" : "tab"}>
+          <Link to="/products" className={!slug && !q ? "tab on" : "tab"}>
             {t("allProducts")}
           </Link>
-          {categories.map((c) => (
-            <Link key={c._id} to={`/category/${c.slug}`} className={c.slug === slug ? "tab on" : "tab"}>
+          {mains.map((c) => (
+            <Link key={c._id} to={categoryLink(c)} className={c.slug === main?.slug ? "tab on" : "tab"}>
               <img src={categoryImage(c)} alt="" />
               {pick(c.name, lang)}
             </Link>
           ))}
         </div>
+        {subs.length > 0 && (
+          <div className="sub-tabs">
+            <Link to={`/category/${main.slug}`} className={category === main ? "sub on" : "sub"}>
+              {t("allOf")} {pick(main.name, lang)}
+            </Link>
+            {subs.map((c) => (
+              <Link key={c._id} to={`/category/${c.slug}`} className={c.slug === slug ? "sub on" : "sub"}>
+                <img src={categoryImage(c)} alt="" />
+                {pick(c.name, lang)}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {category && pick(category.description, lang) && (
           <p className="cat-desc">{pick(category.description, lang)}</p>
@@ -53,9 +85,9 @@ export default function Catalog() {
         {error && <p className="error">{error}</p>}
         {!products && !error && <p className="s-soft">{t("loading")}</p>}
 
-        {products && products.length > 0 && (
+        {shown && shown.length > 0 && (
           <div className="prod-grid">
-            {products.map((p) => (
+            {shown.map((p) => (
               <Link key={p._id} to={`/products/${p.slug}`} className="prod-card">
                 <div className="prod-img">
                   {p.image || p.categorySlug ? (
@@ -81,10 +113,10 @@ export default function Catalog() {
           </div>
         )}
 
-        {products && products.length === 0 && (
+        {shown && shown.length === 0 && (
           <div className="empty-box">
             {category && <img src={categoryImage(category)} alt="" />}
-            <p>{t("noProductsInCategory")}</p>
+            <p>{q ? t("noSearchResults") : t("noProductsInCategory")}</p>
             <Link
               to={category ? `/contact?product=${encodeURIComponent(category.name.en)}` : "/contact"}
               className="s-btn red sm"

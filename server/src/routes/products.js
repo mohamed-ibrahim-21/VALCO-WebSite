@@ -24,7 +24,12 @@ async function withCategory(body) {
 r.get("/", async (req, res, next) => {
   try {
     const filter = req.query.admin === "true" ? {} : { active: true };
-    if (req.query.category) filter.categorySlug = String(req.query.category);
+    if (req.query.category) {
+      // A main category also shows the products of its sub-categories.
+      const slug = String(req.query.category);
+      const subs = await Category.find({ parent: slug }, "slug");
+      filter.categorySlug = { $in: [slug, ...subs.map((c) => c.slug)] };
+    }
     res.json(await Product.find(filter).sort({ featured: -1, createdAt: -1 }));
   } catch (e) {
     next(e);

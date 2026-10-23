@@ -1,28 +1,82 @@
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import {
-  Settings,
-  UsersRound,
-  ShieldCheck,
-  BarChart3,
-  Package,
-  HardHat,
-  Wrench,
-  Headset,
-} from "lucide-react";
+import { Settings, UsersRound, ShieldCheck, BarChart3, Package, Factory, Headset } from "lucide-react";
 import { api } from "./api";
 import { useLang, pick, siteText } from "./i18n.jsx";
-import { Arrow, ContactList, SocialLinks } from "./Layout.jsx";
+import { Arrow, ContactList, SocialLinks, Marked } from "./Layout.jsx";
+import { SERVICES, INDUSTRIES } from "./content.js";
 import { useCatalog, aboutImage } from "./catalog.js";
 
 // Sections shared by the homepage and the About / Services / Contact pages.
 
-export const SERVICES = [
-  [Package, "s1", "s1d", "s1long"],
-  [HardHat, "s2", "s2d", "s2long"],
-  [Wrench, "s3", "s3d", "s3long"],
-  [Headset, "s4", "s4d", "s4long"],
-];
+const STAT_ICONS = [Package, UsersRound, Factory, Headset];
+
+// Image, "About us" text and the numbers cards (homepage and About page).
+export function AboutSplit({ id }) {
+  const { t, lang } = useLang();
+  const { site } = useCatalog();
+  const stats = (site.stats || [])
+    .map((s, i) => ({ ...s, Icon: STAT_ICONS[i] || Package }))
+    .filter((s) => s.value?.trim());
+  return (
+    <section id={id} className={stats.length ? "about-split" : "about-split no-stats"}>
+      <div className="split-photo" aria-hidden="true">
+        <div style={{ backgroundImage: `url("${aboutImage(site)}")` }} />
+      </div>
+      <div className="split-text">
+        <span className="s-eyebrow">{t("aboutUsEyebrow")}</span>
+        <h2 className="sec-title">
+          <Marked text={t("aboutTitle2")} />
+        </h2>
+        <p>{siteText(site, "aboutText", lang, t("aboutText"))}</p>
+        <Link to="/about" className="s-btn red sm">
+          {t("learnMore")} <Arrow size={14} />
+        </Link>
+      </div>
+      {stats.length > 0 && (
+        <div className="stat-grid">
+          {stats.map(({ value, label, Icon }, i) => (
+            <div key={i} className="stat-card">
+              <Icon size={34} strokeWidth={1.5} />
+              <div>
+                <b dir="ltr">{value}</b>
+                <small>{pick(label, lang)}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// Compact industries row for the homepage.
+export function IndustriesStrip({ id }) {
+  const { t } = useLang();
+  return (
+    <section id={id} className="ind-strip">
+      <div className="site-wrap">
+        <div className="sec-head">
+          <div>
+            <span className="s-eyebrow">{t("industriesEyebrow")}</span>
+            <h2 className="sec-title">{t("industriesTitle")}</h2>
+          </div>
+          <Link to="/industries" className="head-link">
+            {t("viewAllIndustries")} <Arrow size={14} />
+          </Link>
+        </div>
+        <div className="ind-tiles">
+          {INDUSTRIES.map(([iid, Icon, k]) => (
+            <Link key={iid} to={`/industries#${iid}`} className="ind-tile">
+              <Icon size={34} strokeWidth={1.5} />
+              <b>{t(k)}</b>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function AboutBand({ id, showButton = true }) {
   const { t, lang } = useLang();
@@ -71,15 +125,15 @@ export function ServicesStrip({ id }) {
       <div className="site-wrap services-row">
         <div className="services-intro">
           <span className="s-eyebrow">{t("servicesEyebrow")}</span>
-          <h2>{t("servicesTitle")}</h2>
+          <h2 className="sec-title">{t("servicesTitle")}</h2>
           <p>{t("servicesDesc")}</p>
           <Link to="/services" className="s-btn red sm">
             {t("learnMore")} <Arrow size={14} />
           </Link>
         </div>
         <div className="svc-grid">
-          {SERVICES.map(([Icon, k, d]) => (
-            <Link key={k} to="/services" className="svc-card">
+          {SERVICES.map(([sid, Icon, k, d]) => (
+            <Link key={k} to={`/services#${sid}`} className="svc-card">
               <span className="svc-icon">
                 <Icon size={26} strokeWidth={1.7} />
               </span>
