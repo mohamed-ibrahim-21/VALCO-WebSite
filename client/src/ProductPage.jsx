@@ -3,15 +3,15 @@ import { Link, useParams } from "react-router-dom";
 import { Boxes, Minus, Plus, CheckCircle2 } from "lucide-react";
 import { api, imageUrl } from "./api";
 import { useLang, pick } from "./i18n.jsx";
-import { Header, SiteFooter } from "./Layout.jsx";
+import { Header, SiteFooter, PageBanner } from "./Layout.jsx";
+import { categoryImage } from "./catalog.js";
 
 const emptyContact = { name: "", company: "", email: "", phone: "", message: "" };
 
 export default function ProductPage() {
   const { slug } = useParams();
   const { t, lang } = useLang();
-  const [site, setSite] = useState({}),
-    [product, setProduct] = useState(null),
+  const [product, setProduct] = useState(null),
     [loadError, setLoadError] = useState(""),
     [active, setActive] = useState(""),
     [choices, setChoices] = useState({}),
@@ -22,11 +22,10 @@ export default function ProductPage() {
     [sent, setSent] = useState(false);
 
   useEffect(() => {
-    api("/api/site").then(setSite).catch(() => {});
     api(`/api/products/slug/${encodeURIComponent(slug)}`)
       .then((p) => {
         setProduct(p);
-        setActive(p.image || p.gallery?.[0] || "");
+        setActive(p.image || p.gallery?.[0] || (p.categorySlug ? categoryImage({ slug: p.categorySlug }) : ""));
       })
       .catch(() => setLoadError(t("productNotFound")));
     window.scrollTo(0, 0);
@@ -34,15 +33,19 @@ export default function ProductPage() {
 
   if (loadError)
     return (
-      <>
-        <Header site={site} />
-        <section className="section">
-          <p>{loadError}</p>
-          <Link className="btn primary" to="/#products">
-            {t("backToProducts")}
-          </Link>
+      <div className="site">
+        <Header />
+        <PageBanner title={t("navProducts")} crumbs={[[t("navHome"), "/"], [t("navProducts"), "/products"]]} />
+        <section className="s-catalog site-wrap">
+          <div className="empty-box">
+            <p>{loadError}</p>
+            <Link className="s-btn red sm" to="/products">
+              {t("backToProducts")}
+            </Link>
+          </div>
         </section>
-      </>
+        <SiteFooter />
+      </div>
     );
   if (!product) return <div className="loading">{t("loading")}</div>;
 
@@ -99,13 +102,16 @@ export default function ProductPage() {
     }
   }
 
+  const categoryName = pick({ en: product.category, ar: product.categoryAr }, lang);
+  const crumbs = [[t("navHome"), "/"], [t("navProducts"), "/products"]];
+  if (product.categorySlug && categoryName) crumbs.push([categoryName, `/category/${product.categorySlug}`]);
+  crumbs.push([name, null]);
+
   return (
-    <>
-      <Header site={site} />
+    <div className="site">
+      <Header />
+      <PageBanner eyebrow={t("catalogEyebrow")} title={categoryName || t("navProducts")} crumbs={crumbs} />
       <section className="section product-page">
-        <Link className="crumb" to="/#products">
-          {t("arrow") === "→" ? "←" : "→"} {t("backToProducts")}
-        </Link>
         <div className="pd-grid">
           <div className="pd-gallery">
             <div className="pd-main">
@@ -146,7 +152,7 @@ export default function ProductPage() {
                 <CheckCircle2 size={36} />
                 <h3>{t("requestSentTitle")}</h3>
                 <p>{t("requestSentBody")}</p>
-                <Link className="btn primary" to="/#products">
+                <Link className="s-btn red sm" to="/products">
                   {t("backToProducts")}
                 </Link>
               </div>
@@ -257,7 +263,7 @@ export default function ProductPage() {
           </div>
         )}
       </section>
-      <SiteFooter site={site} />
-    </>
+      <SiteFooter />
+    </div>
   );
 }

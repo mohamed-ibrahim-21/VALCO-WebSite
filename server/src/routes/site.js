@@ -32,6 +32,9 @@ r.put("/", requireAdmin, async (req, res, next) => {
         "heroTitleAr",
         "heroSubtitleAr",
         "aboutTextAr",
+        "heroHighlight",
+        "heroHighlightAr",
+        "aboutImage",
       ],
       data = {};
     for (const k of allowed)

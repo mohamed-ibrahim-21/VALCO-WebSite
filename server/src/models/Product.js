@@ -23,6 +23,8 @@ const schema = new mongoose.Schema(
     },
     category: { type: String, default: "Valves" },
     categoryAr: { type: String, default: "" },
+    // Links the product to a Category; category/categoryAr keep a copy of its names.
+    categorySlug: { type: String, default: "", index: true },
     image: { type: String, default: "" },
     gallery: { type: [String], default: [] },
     options: { type: mongoose.Schema.Types.Mixed, default: {} },

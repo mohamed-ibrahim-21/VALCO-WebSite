@@ -18,166 +18,19 @@ import {
   Menu,
   Languages,
   KeyRound,
+  FolderTree,
 } from "lucide-react";
 import { api, imageUrl } from "./api";
-import { useLang, pick, siteText, LangToggle } from "./i18n.jsx";
-import { Header, SiteFooter } from "./Layout.jsx";
+import { useLang, pick, LangToggle } from "./i18n.jsx";
+import Home from "./Home.jsx";
+import Catalog from "./Catalog.jsx";
+import AdminCategories from "./AdminCategories.jsx";
+import { loadCatalog } from "./catalog.js";
 import ProductPage from "./ProductPage.jsx";
 import Account from "./Account.jsx";
 import ProductExtrasEditor, { toEditable, fromEditable } from "./ProductExtrasEditor.jsx";
 
 const locale = (lang) => (lang === "ar" ? "ar-EG" : "en-GB");
-
-const emptyQuote = {
-  name: "",
-  company: "",
-  email: "",
-  phone: "",
-  product: "",
-  message: "",
-};
-
-function Home() {
-  const { t, lang } = useLang();
-  const [site, S] = useState({}),
-    [products, P] = useState([]),
-    [form, F] = useState(emptyQuote),
-    [msg, M] = useState("");
-  useEffect(() => {
-    Promise.all([api("/api/site"), api("/api/products")])
-      .then(([s, p]) => {
-        S(s);
-        P(p);
-      })
-      .catch((e) => M(e.message));
-  }, []);
-  // Coming back from a product page with /#products: scroll once content has rendered.
-  useEffect(() => {
-    if (!location.hash) return;
-    const el = document.getElementById(location.hash.slice(1));
-    if (el) el.scrollIntoView();
-  }, [products.length, site]);
-  function upd(e) {
-    F({ ...form, [e.target.name]: e.target.value });
-  }
-  async function send(e) {
-    e.preventDefault();
-    try {
-      await api("/api/quotes", {
-        method: "POST",
-        body: JSON.stringify(form),
-      });
-      M(t("quoteSent"));
-      F(emptyQuote);
-    } catch (e) {
-      M(e.message);
-    }
-  }
-  return (
-    <>
-      <Header site={site} />
-      <section id="home" className="hero">
-        <div>
-          <span className="pill">{t("heroPill")}</span>
-          <h1>{siteText(site, "heroTitle", lang, t("heroTitle"))}</h1>
-          <p>{siteText(site, "heroSubtitle", lang, t("heroSubtitle"))}</p>
-          <a className="btn white" href="#products">
-            {t("exploreProducts")} {t("arrow")}
-          </a>{" "}
-          <a className="btn ghost" href="#contact">
-            {t("requestQuote")}
-          </a>
-        </div>
-        <div className="hero-img">
-          {site.heroImage ? (
-            <img src={imageUrl(site.heroImage)} alt={t("heroImageAlt")} />
-          ) : (
-            <h2>{t("heroFallback")}</h2>
-          )}
-        </div>
-      </section>
-      <section id="products" className="section">
-        <span className="eyebrow">{t("catalogEyebrow")}</span>
-        <h2>{t("ourProducts")}</h2>
-        <p>{t("catalogDesc")}</p>
-        <div className="grid">
-          {products.map((p) => (
-            <Link className="card" to={`/products/${p.slug}`} key={p._id}>
-              <div className="product-img">
-                {p.image ? (
-                  <img src={imageUrl(p.image)} alt={pick(p.name, lang)} />
-                ) : (
-                  <Boxes size={44} />
-                )}
-              </div>
-              <div className="card-body">
-                <small>
-                  {pick({ en: p.category, ar: p.categoryAr }, lang)}
-                </small>
-                <h3>{pick(p.name, lang)}</h3>
-                <p>{pick(p.description, lang)}</p>
-                <span className="card-link">
-                  {t("viewDetails")} {t("arrow")}
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-        {!products.length && <p>{t("noProducts")}</p>}
-      </section>
-      <section id="about" className="about">
-        <span className="eyebrow">{t("aboutEyebrow")}</span>
-        <h2>{t("aboutTitle")}</h2>
-        <p>{siteText(site, "aboutText", lang, t("aboutText"))}</p>
-      </section>
-      <section id="contact" className="section contact">
-        <div>
-          <span className="eyebrow">{t("talkEyebrow")}</span>
-          <h2>{t("requestQuote")}</h2>
-          <p>{t("contactDesc")}</p>
-          {site.contactEmail && <p dir="ltr">{site.contactEmail}</p>}
-          {site.contactPhone && <p dir="ltr">{site.contactPhone}</p>}
-        </div>
-        <form onSubmit={send} className="form-grid">
-          {[
-            ["name", "fName"],
-            ["company", "fCompany"],
-            ["email", "fEmail"],
-            ["phone", "fPhone"],
-            ["product", "fProduct"],
-          ].map(([n, l]) => (
-            <label key={n}>
-              {t(l)}
-              <input
-                name={n}
-                value={form[n]}
-                onChange={upd}
-                required={n === "name" || n === "email"}
-                type={n === "email" ? "email" : n === "phone" ? "tel" : "text"}
-                dir={n === "email" || n === "phone" ? "ltr" : undefined}
-              />
-            </label>
-          ))}
-          <label className="full">
-            {t("fMessage")}
-            <textarea
-              name="message"
-              value={form.message}
-              onChange={upd}
-              required
-              rows="4"
-            />
-          </label>
-          <button className="btn primary">
-            {t("sendRequest")} {t("arrow")}
-          </button>
-          {msg && <p>{msg}</p>}
-        </form>
-      </section>
-      <SiteFooter site={site} />
-    </>
-  );
-}
 
 function Login() {
   const { t } = useLang();
@@ -254,6 +107,7 @@ function AdminShell({ children, active, logout }) {
     items = [
       ["/admin", "overview", LayoutDashboard],
       ["/admin/products", "products", Package],
+      ["/admin/categories", "categories", FolderTree],
       ["/admin/content", "websiteContent", Settings],
       ["/admin/quotes", "quoteRequests", ClipboardList],
       ["/admin/account", "account", KeyRound],
@@ -322,19 +176,22 @@ function useData() {
   const [products, P] = useState([]),
     [quotes, Q] = useState([]),
     [site, setSite] = useState({}),
+    [categories, setCategories] = useState([]),
     [error, E] = useState(""),
     [loading, L] = useState(true);
   async function refresh() {
     L(true);
     try {
-      const [a, b, c] = await Promise.all([
+      const [a, b, c, cats] = await Promise.all([
         api("/api/products?admin=true"),
         api("/api/quotes"),
         api("/api/site"),
+        api("/api/categories?admin=true"),
       ]);
       P(a);
       Q(b);
       setSite(c);
+      setCategories(cats);
       E("");
     } catch (e) {
       E(e.message);
@@ -345,7 +202,7 @@ function useData() {
   useEffect(() => {
     refresh();
   }, []);
-  return { products, quotes, site, setSite, error, loading, refresh };
+  return { products, quotes, site, setSite, categories, error, loading, refresh };
 }
 
 function Overview({ d }) {
@@ -410,8 +267,7 @@ const blank = () => ({
   sku: "",
   name: { en: "", ar: "" },
   description: { en: "", ar: "" },
-  category: "Gate Valves",
-  categoryAr: "محابس بوابة",
+  categorySlug: "",
   image: "",
   featured: false,
   active: true,
@@ -489,7 +345,10 @@ function Products({ d }) {
         title={t("products")}
         desc={t("productsDesc")}
         action={
-          <button className="btn primary" onClick={() => E(toEditable(blank()))}>
+          <button
+            className="btn primary"
+            onClick={() => E(toEditable({ ...blank(), categorySlug: d.categories[0]?.slug || "" }))}
+          >
             <Plus size={16} />
             {t("addProduct")}
           </button>
@@ -567,21 +426,19 @@ function Products({ d }) {
                   onChange={(e) => setName("ar", e.target.value)}
                 />
               </label>
-              <label>
-                {t("categoryEn")}
-                <input
-                  dir="ltr"
-                  value={edit.category || ""}
-                  onChange={(e) => E({ ...edit, category: e.target.value })}
-                />
-              </label>
-              <label>
-                {t("categoryAr")}
-                <input
-                  dir="rtl"
-                  value={edit.categoryAr || ""}
-                  onChange={(e) => E({ ...edit, categoryAr: e.target.value })}
-                />
+              <label className="full">
+                {t("category")}
+                <select
+                  value={edit.categorySlug || ""}
+                  onChange={(e) => E({ ...edit, categorySlug: e.target.value })}
+                >
+                  <option value="">{t("noCategory")}</option>
+                  {d.categories.map((c) => (
+                    <option key={c._id} value={c.slug}>
+                      {pick(c.name, lang)}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="full">
                 {t("descEn")}
@@ -678,6 +535,7 @@ function Content({ d }) {
         body: JSON.stringify(f),
       });
       d.setSite(s);
+      loadCatalog(true).catch(() => {});
       M(t("contentSaved"));
     } catch (e) {
       M(e.message);
@@ -687,6 +545,7 @@ function Content({ d }) {
     ["companyName", "companyName"],
     ["tagline", "taglineL"],
     ["heroTitle", "heroTitleL"],
+    ["heroHighlight", "heroHighlightL"],
     ["heroSubtitle", "heroSubtitleL"],
   ];
   const field = (k, label, dir) => (
@@ -697,6 +556,38 @@ function Content({ d }) {
         value={f[k] || ""}
         onChange={(e) => F({ ...f, [k]: e.target.value })}
       />
+    </label>
+  );
+  async function uploadTo(k, file) {
+    const fd = new FormData();
+    fd.append("image", file);
+    try {
+      const r = await api("/api/upload", { method: "POST", body: fd });
+      F((x) => ({ ...x, [k]: r.url }));
+    } catch (err) {
+      M(err.message);
+    }
+  }
+  const imageField = (k, label) => (
+    <label key={k} className="full">
+      {t(label)}
+      <div className="image-field">
+        {f[k] && <img src={imageUrl(f[k])} alt="" />}
+        <input dir="ltr" value={f[k] || ""} onChange={(e) => F({ ...f, [k]: e.target.value })} />
+        <span className="upload-label">
+          <Upload size={15} /> {t("upload")}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) uploadTo(k, file);
+            }}
+          />
+        </span>
+      </div>
+      <span className="field-hint">{t("heroImageHelp")}</span>
     </label>
   );
   return (
@@ -735,7 +626,8 @@ function Content({ d }) {
         </div>
         <h2 className="section-gap">{t("sharedSettings")}</h2>
         <div className="form-grid">
-          {field("heroImage", "heroImageL", "ltr")}
+          {imageField("heroImage", "heroImageL")}
+          {imageField("aboutImage", "aboutImageL")}
           {field("contactEmail", "contactEmail", "ltr")}
           {field("contactPhone", "contactPhone", "ltr")}
         </div>
@@ -855,6 +747,8 @@ function Admin() {
       ? "/admin"
       : path.startsWith("/admin/products")
         ? "/admin/products"
+        : path.startsWith("/admin/categories")
+          ? "/admin/categories"
         : path.startsWith("/admin/content")
           ? "/admin/content"
           : path.startsWith("/admin/account")
@@ -874,6 +768,7 @@ function Admin() {
         <Routes>
           <Route index element={<Overview d={d} />} />
           <Route path="products" element={<Products d={d} />} />
+          <Route path="categories" element={<AdminCategories d={d} />} />
           <Route path="content" element={<Content d={d} />} />
           <Route path="quotes" element={<Quotes d={d} />} />
           <Route path="account" element={<Account />} />
@@ -888,6 +783,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/products" element={<Catalog />} />
+      <Route path="/category/:slug" element={<Catalog />} />
       <Route path="/products/:slug" element={<ProductPage />} />
       <Route path="/admin/login" element={<Login />} />
       <Route path="/admin/*" element={<Admin />} />

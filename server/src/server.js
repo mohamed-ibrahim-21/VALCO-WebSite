@@ -11,6 +11,8 @@ import products from "./routes/products.js";
 import site from "./routes/site.js";
 import quotes from "./routes/quotes.js";
 import upload from "./routes/upload.js";
+import categories from "./routes/categories.js";
+import { ensureDefaults } from "./defaults.js";
 const app = express(),
   dir = path.dirname(fileURLToPath(import.meta.url));
 if (!process.env.MONGODB_URI)
@@ -28,6 +30,7 @@ app.use("/uploads", express.static(path.resolve(dir, "../uploads")));
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", auth);
 app.use("/api/products", products);
+app.use("/api/categories", categories);
 app.use("/api/site", site);
 app.use("/api/quotes", quotes);
 app.use("/api/upload", upload);
@@ -58,6 +61,7 @@ async function start() {
     console.log("Initial admin created:", email);
   } else if (email)
     console.log("Admin already exists; existing password was not changed.");
+  await ensureDefaults();
   app.listen(port, () => console.log(`VALCO API listening on port ${port}`));
 }
 start().catch((e) => {

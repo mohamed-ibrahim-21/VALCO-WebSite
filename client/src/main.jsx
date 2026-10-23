@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { LangProvider } from "./i18n.jsx";
 import "./styles.css";
+import "./site.css";
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>

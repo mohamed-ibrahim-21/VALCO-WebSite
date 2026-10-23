@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
 import { requireAdmin } from "../middleware/auth.js";
 const r = Router();
 const slugify = (s) =>
@@ -9,13 +10,22 @@ const slugify = (s) =>
     .normalize("NFKD")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || `product-${Date.now()}`;
+// Copy the chosen category's names onto the product so lists can show them directly.
+async function withCategory(body) {
+  if (body.categorySlug === undefined) return body;
+  const c = body.categorySlug ? await Category.findOne({ slug: body.categorySlug }) : null;
+  return {
+    ...body,
+    categorySlug: c ? c.slug : "",
+    category: c ? c.name.en : "",
+    categoryAr: c ? c.name.ar : "",
+  };
+}
 r.get("/", async (req, res, next) => {
   try {
-    res.json(
-      await Product.find(
-        req.query.admin === "true" ? {} : { active: true },
-      ).sort({ featured: -1, createdAt: -1 }),
-    );
+    const filter = req.query.admin === "true" ? {} : { active: true };
+    if (req.query.category) filter.categorySlug = String(req.query.category);
+    res.json(await Product.find(filter).sort({ featured: -1, createdAt: -1 }));
   } catch (e) {
     next(e);
   }
@@ -39,7 +49,7 @@ r.post("/", requireAdmin, async (req, res, next) => {
       .status(201)
       .json(
         await Product.create({
-          ...req.body,
+          ...(await withCategory(req.body)),
           slug: req.body.slug || slugify(req.body.name.en),
         }),
       );
@@ -53,7 +63,7 @@ r.post("/", requireAdmin, async (req, res, next) => {
 });
 r.put("/:id", requireAdmin, async (req, res, next) => {
   try {
-    const p = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const p = await Product.findByIdAndUpdate(req.params.id, await withCategory(req.body), {
       new: true,
       runValidators: true,
     });
