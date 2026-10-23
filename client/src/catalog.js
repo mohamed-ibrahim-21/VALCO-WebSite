@@ -55,5 +55,4 @@ export const heroImage = (site) =>
 export const aboutImage = (site) =>
   site?.aboutImage ? imageUrl(site.aboutImage) : "/img/about-industrial.svg";
 
-// The Services category card opens the Services page; others open their product list.
-export const categoryLink = (c) => (c.slug === "services" ? "/services" : `/category/${c.slug}`);
+export const categoryLink = (c) => `/category/${c.slug}`;

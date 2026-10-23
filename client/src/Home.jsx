@@ -89,7 +89,7 @@ export default function Home() {
               {t("viewAllProducts")} <Arrow size={14} />
             </Link>
           </div>
-          <div className="pc-grid">
+          <div className="pc-grid" style={{ "--cols": Math.min(Math.max(mains.length, 1), 5) }}>
             {mains.map((c) => (
               <Link key={c._id} to={categoryLink(c)} className="pc-card">
                 <div className="pc-img">

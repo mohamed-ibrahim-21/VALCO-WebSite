@@ -37,14 +37,6 @@ export const MAIN_CATEGORIES = [
       ar: "فلانشات برقبة وسليب أون وعمياء ولحام بالمقاييس العالمية.",
     },
   },
-  {
-    slug: "services",
-    name: { en: "Services", ar: "الخدمات" },
-    description: {
-      en: "Valve maintenance, repair and pressure testing.",
-      ar: "صيانة وإصلاح واختبار ضغط المحابس.",
-    },
-  },
 ];
 
 // Valve types, shown under Valves.
@@ -122,7 +114,7 @@ const OLD_SITE_TEXT = {
 // The red ending only belonged to the old headline.
 const OLD_HIGHLIGHT = { heroHighlight: "Safer Tomorrow", heroHighlightAr: "لغدٍ أكثر أمانًا" };
 
-const CATALOG_VERSION = 2;
+const CATALOG_VERSION = 3;
 
 export async function ensureDefaults() {
   const site = await SiteContent.findOneAndUpdate(
@@ -147,9 +139,21 @@ export async function ensureDefaults() {
       { slug: { $in: MAIN_CATEGORIES.map((c) => c.slug) } },
       { $set: { parent: "" } },
     );
+    // v3: "Services" is no longer a product category (it has its own page).
+    const services = await Category.findOne({ slug: "services" });
+    if (services) {
+      const used =
+        (await Product.countDocuments({ categorySlug: "services" })) +
+        (await Category.countDocuments({ parent: "services" }));
+      if (used) {
+        services.active = false; // keep it (hidden) so linked products aren't orphaned
+        await services.save();
+      } else await services.deleteOne();
+      console.log("Removed the Services product category");
+    }
     site.catalogVersion = CATALOG_VERSION;
     await site.save();
-    console.log(`Catalog updated: ${toAdd.length} categor${toAdd.length === 1 ? "y" : "ies"} added; valve types now under Valves`);
+    console.log(`Catalog updated to v${CATALOG_VERSION}`);
   }
 
   // Link products created before categories existed, by matching their category name.

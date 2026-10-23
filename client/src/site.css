@@ -2246,3 +2246,12 @@ html[dir="rtl"] .sec-title,
 html[dir="rtl"] .h-hero h1 {
   letter-spacing: 0;
 }
+
+.pc-grid {
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+}
+@media (max-width: 1150px) {
+  .pc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
